@@ -33,20 +33,30 @@
   // deterministic and testable.
   // Fields: { alt, img } where `img` is a URL or data-URI and `alt` is the
   // accessible textual description for screen readers.
+  // Slide sources are now external image files stored under public/assets/img.
+  // We store only filenames here so other pages (root vs public preview) can
+  // resolve the correct path at runtime using resolveImagePath().
   const slides = [
-    {
-      alt: 'Freshly brewed coffee',
-      img: 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420"><rect width="100%" height="100%" fill="#f7efe9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="40" fill="#6b3f2a" font-family="Arial">Freshly brewed — Titan Coffee Run</text></svg>`)
-    },
-    {
-      alt: 'Iced nitro cold brew',
-      img: 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420"><rect width="100%" height="100%" fill="#eefaf6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="40" fill="#155e63" font-family="Arial">Iced Nitro Cold Brew</text></svg>`)
-    },
-    {
-      alt: 'Almond latte special',
-      img: 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420"><rect width="100%" height="100%" fill="#fff7f2"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="40" fill="#8b5e3c" font-family="Arial">Almond Latte — Today's Special</text></svg>`)
-    }
+    { alt: 'Freshly brewed coffee', img: 'banner-hero.svg' },
+    { alt: 'Iced nitro cold brew', img: 'carousel-1.svg' },
+    { alt: 'Almond latte special', img: 'carousel-2.svg' }
   ];
+
+  // Helper: resolve the correct relative path for images depending on whether
+  // the current document is the root index or the demo page inside /public/.
+  // - If the page lives under /public/ (e.g., public/index.html), images are
+  //   in ./assets/img/
+  // - Otherwise (root index.html), images are in ./public/assets/img/
+  function resolveImagePath(filename) {
+    try {
+      const path = location && location.pathname ? location.pathname : '/';
+      const inPublic = path.includes('/public/') || path.endsWith('/public') || path.endsWith('/public/index.html');
+      const base = inPublic ? './assets/img/' : './public/assets/img/';
+      return base + filename;
+    } catch (e) {
+      return './public/assets/img/' + filename;
+    }
+  }
 
   // --- Styles injection ---
   // We append a small stylesheet programmatically so the carousel is self-contained.
@@ -91,9 +101,14 @@
       slide.className = 'slide' + (i === 0 ? ' active' : '');
       slide.dataset.index = i;
 
-      const img = document.createElement('img');
-      img.src = s.img;
-      img.alt = s.alt || '';
+  const img = document.createElement('img');
+  // Use resolveImagePath to find the image under public/assets/img or
+  // public preview's assets folder. Add lazy loading and async decoding for
+  // better performance on mobile.
+  img.src = resolveImagePath(s.img);
+  img.alt = s.alt || '';
+  img.loading = 'lazy';
+  img.decoding = 'async';
 
       slide.appendChild(img);
       slidesWrap.appendChild(slide);
