@@ -8,6 +8,13 @@
     <link rel="stylesheet" href="./src/styles/main.css">
 </head>
 <body>
+    <!--
+        HEADER
+        This is the site header / top navigation. It contains the brand block (logo + name)
+        and the primary nav links. Keep this lightweight so it stays visible on small
+        screens. It's marked up with a <header> element for semantic clarity and to help
+        screen readers and search engines understand document structure.
+    -->
     <header>
         <div class="brand">
             <div class="logo">T</div>
@@ -24,6 +31,14 @@
         </nav>
     </header>
 
+    <!--
+        MAIN CONTENT
+        The <main> element contains the primary page content. We place the hero section
+        inside a <section class="hero"> so it's easy to restyle or replace. The carousel
+        script injected by `./src/index.js` inserts its widget at the top of <main>,
+        before this hero section. That keeps the carousel visually prominent while
+        preserving semantic structure.
+    -->
     <main>
         <section class="hero">
             <div>
@@ -31,6 +46,13 @@
                 <p class="tag">Grab your daily coffee — expertly brewed and ready when you are. Order ahead or stop by for a quick pick-up.</p>
                 <a class="cta" href="#">Order Now</a>
 
+                <!--
+                    GRID: small info cards
+                    This grid uses CSS Grid with `auto-fit` and `minmax` (see stylesheet) so
+                    cards collapse responsively. Each `.card` is intentionally simple —
+                    avoid adding heavy layout logic here. If an item needs special layout,
+                    prefer a nested element with its own class.
+                -->
                 <div class="grid" style="margin-top:1.25rem">
                     <div class="card">
                         <strong>Hours</strong>
@@ -47,6 +69,15 @@
                 </div>
             </div>
 
+            <!--
+                ASIDE: complementary content
+                We use an <aside> here because the pickup/quick-info box is related to the
+                main content but not central to it — it's complementary. Screen readers
+                and layout engines understand that <aside> content is tangential to the
+                page's main flow. Keep critical actions (like the main 'Order' CTA) in
+                the main flow; use <aside> for supportive information like pickup times
+                or promotions.
+            -->
             <aside style="padding:1rem">
                 <div style="background:#fff;border-radius:10px;padding:1rem;text-align:center">
                     <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='140'><rect rx='14' width='100%' height='100%' fill='%23f7efe9'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' fill='%236b3f2a' font-size='20' font-family='Arial'>Coffee</text></svg>" alt="" style="width:100%;height:auto;border-radius:8px;margin-bottom:.75rem">
@@ -57,14 +88,32 @@
         </section>
     </main>
 
+    <!--
+        FOOTER
+        Small copyright/footer area. Keep legal and tiny meta-info here. The year
+        is inserted by the small script below for convenience.
+    -->
     <footer>
         © <span id="year"></span> Titan Coffee Run — All rights reserved.
     </footer>
 
     <script>
+        // Simple helper to inject the current year so the footer stays up-to-date.
         document.getElementById('year').textContent = new Date().getFullYear();
     </script>
-    <!-- Load the vanilla JS carousel (relative path for Pages) -->
+
+    <!--
+        CAROUSEL MODULE
+        The carousel is loaded as an ES module here. Browsers fetch `./src/index.js`
+        relative to this file (root). Using `type="module"` means the script is
+        deferred and executed after parsing — the module itself will wait for
+        DOMContentLoaded before injecting the carousel into <main>.
+
+        Notes for contributors:
+        - If you move /src/index.js, update this path accordingly.
+        - Modules require HTTP/HTTPS; opening this file with file:// will not run the
+          module in many browsers. Use Live Server or GitHub Pages for testing.
+    -->
     <script type="module" src="./src/index.js"></script>
 </body>
 </html>

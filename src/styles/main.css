@@ -1,4 +1,18 @@
 :root{
+        --bg:#fff7f2;
+        --accent:#6b3f2a;
+        --muted:#6b6b6b;
+        --card:#fff;
+}
+/*
+    main.css — layout and theme variables
+    - The :root variables provide a single place to tweak brand colors and card
+        backgrounds. Prefer adjusting variables rather than editing many rules.
+    - The grid in the hero area uses auto-fit/minmax so it responds well across
+        widths. See the media query at the bottom which switches the hero into a
+        two-column layout at larger widths.
+*/
+:root{
     --bg:#fff7f2;
     --accent:#6b3f2a;
     --muted:#6b6b6b;
@@ -52,5 +66,11 @@ main{max-width:980px;margin:2rem auto;padding:0 1rem}
 .card{background:var(--card);padding:1rem;border-radius:10px;box-shadow:0 6px 18px rgba(98,54,30,.04)}
 footer{max-width:980px;margin:2rem auto;padding:1rem;text-align:center;color:var(--muted);font-size:.95rem}
 @media(min-width:720px){
-    .hero{grid-template-columns:1fr 320px;align-items:center}
+        /*
+            At larger viewports we place the hero content and the aside side-by-side.
+            The right column is fixed at 320px; the left column is fluid. This keeps
+            the pickup box (aside) at a readable width while allowing the main copy
+            to expand.
+        */
+        .hero{grid-template-columns:1fr 320px;align-items:center}
 }

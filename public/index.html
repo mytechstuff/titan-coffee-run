@@ -8,6 +8,11 @@
     <link rel="stylesheet" href="/src/styles/main.css">
 </head>
 <body>
+    <!--
+        HEADER
+        Top navigation and brand area. Same guidance as root index.html — keep this
+        markup simple: it is visible on every page and should not contain heavy logic.
+    -->
     <header>
         <div class="brand">
             <div class="logo">T</div>
@@ -24,6 +29,13 @@
         </nav>
     </header>
 
+    <!--
+        MAIN CONTENT (public/index.html)
+        When serving the demo page from /public/ this file is convenient to preview
+        the UI. Note that this file references assets using absolute-ish paths (e.g.
+        /src/styles/main.css). If your server serves /public as the root, that may
+        cause 404s; prefer serving the workspace root or adjust the asset paths.
+    -->
     <main>
         <section class="hero">
             <div>
@@ -31,6 +43,11 @@
                 <p class="tag">Grab your daily coffee — expertly brewed and ready when you are. Order ahead or stop by for a quick pick-up.</p>
                 <a class="cta" href="#">Order Now</a>
 
+                <!--
+                    GRID: three small cards. Each card is intentionally minimal so content
+                    can flow and wrap on mobile. Try not to add fixed heights here — let
+                    the content determine size for better responsiveness.
+                -->
                 <div class="grid" style="margin-top:1.25rem">
                     <div class="card">
                         <strong>Hours</strong>
@@ -47,6 +64,12 @@
                 </div>
             </div>
 
+            <!--
+                ASIDE (public view)
+                Same aside rationale: complementary info. On smaller screens the aside
+                stacks below the hero content due to the grid — this preserves a
+                logical reading order on mobile devices.
+            -->
             <aside style="padding:1rem">
                 <div style="background:#fff;border-radius:10px;padding:1rem;text-align:center">
                     <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='140'><rect rx='14' width='100%' height='100%' fill='%23f7efe9'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' fill='%236b3f2a' font-size='20' font-family='Arial'>Coffee</text></svg>" alt="" style="width:100%;height:auto;border-radius:8px;margin-bottom:.75rem">
@@ -62,9 +85,17 @@
     </footer>
 
     <script>
+        // Keep the footer year dynamic so commits are not required each year.
         document.getElementById('year').textContent = new Date().getFullYear();
     </script>
-    <!-- Load the vanilla JS carousel (served from project root /src) -->
+
+    <!--
+        CAROUSEL: module load
+        The demo version uses an absolute-root-prefixed reference: /src/index.js because
+        when we preview from the project root the leading slash resolves correctly.
+        If you open this file directly from `public/` with a server that maps the
+        site root differently you may need to change this path to a relative one.
+    -->
     <script type="module" src="/src/index.js"></script>
 </body>
 </html>

@@ -2,6 +2,17 @@
 // - Auto-rotates every 3 seconds
 // - No external libraries
 // - Injects a banner/carousel at the top of <main>
+//
+// Developer notes:
+// - This script builds DOM elements dynamically and inserts them before the
+//   first child of <main>. If you change the location of <main> or the selector,
+//   update the `main` query below.
+// - Because this is loaded as type="module" (deferred), the script will run
+//   after parsing. The build function also waits for DOMContentLoaded when
+//   necessary, ensuring <main> exists.
+// - Accessibility: the carousel supports keyboard navigation and pauses on
+//   hover/focus. Indicators are buttons with aria-labels so screen readers can
+//   announce them.
 
 (function () {
   // Simple image slides (data-URI SVG placeholders). Replace or extend with real image URLs if you like.
