@@ -1,21 +1,38 @@
-// Simple vanilla JS carousel
-// - Auto-rotates every 3 seconds
-// - No external libraries
+// Simple vanilla JS carousel (section overview)
+// - Auto-rotates every 3 seconds (3000ms)
+// - No external libraries (pure DOM + CSS)
 // - Injects a banner/carousel at the top of <main>
 //
-// Developer notes:
-// - This script builds DOM elements dynamically and inserts them before the
-//   first child of <main>. If you change the location of <main> or the selector,
-//   update the `main` query below.
-// - Because this is loaded as type="module" (deferred), the script will run
-//   after parsing. The build function also waits for DOMContentLoaded when
-//   necessary, ensuring <main> exists.
-// - Accessibility: the carousel supports keyboard navigation and pauses on
-//   hover/focus. Indicators are buttons with aria-labels so screen readers can
-//   announce them.
+// This file is organized by conceptual sections. Each section contains a short
+// explanation followed by the code that implements it. The goal is to make the
+// script approachable for students learning modern DOM programming and state
+// management in JavaScript.
+//
+// Sections:
+// 1. Data model — the `slides` array (slide metadata)
+// 2. Styles injection — small, component-scoped CSS appended to <head>
+// 3. DOM construction — buildCarousel(): creates carousel DOM nodes
+// 4. Controls & indicators — event wiring for prev/next and dot buttons
+// 5. State management & timing — `current`, `start`, `stop`, and `show`
+// 6. Accessibility & interaction patterns — keyboard, hover/focus pause
+// 7. Bootstrap — run on DOMContentLoaded or immediately if ready
+//
+// Teaching notes (what students should focus on):
+// - Separation of concerns: model vs view vs controller. `slides` is the model,
+//   DOM nodes are the view, and event handlers + timer are the controller.
+// - Idempotence: building the carousel should be safe if called once; avoid
+//   calling build multiple times without teardown to prevent leaks.
+// - Progressive enhancement: the page content remains readable if JS fails;
+//   the carousel adds visual enhancements only.
 
 (function () {
-  // Simple image slides (data-URI SVG placeholders). Replace or extend with real image URLs if you like.
+  // --- Data model: slides array ---
+  // This is the canonical source of truth for the carousel. Each object represents
+  // one slide (a pure data object). In a more complex app this might come from
+  // an API or CMS. Keeping the data model separate makes the rendering code
+  // deterministic and testable.
+  // Fields: { alt, img } where `img` is a URL or data-URI and `alt` is the
+  // accessible textual description for screen readers.
   const slides = [
     {
       alt: 'Freshly brewed coffee',
@@ -31,7 +48,12 @@
     }
   ];
 
-  // Inject minimal carousel styles
+  // --- Styles injection ---
+  // We append a small stylesheet programmatically so the carousel is self-contained.
+  // This is a lightweight pattern used for isolated components (no build step).
+  // Pros: the component can be dropped into any page and will carry its styles.
+  // Cons: harder to override globally; for larger apps prefer separate CSS files
+  // and class scoping via BEM or CSS modules.
   const style = document.createElement('style');
   style.textContent = `
     .simple-carousel { max-width:1100px; margin:18px auto; position:relative; border-radius:12px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.06); }
@@ -48,6 +70,10 @@
   `;
   document.head.appendChild(style);
 
+  // --- DOM construction ---
+  // buildCarousel is responsible for creating the DOM structure for the carousel,
+  // wiring event listeners, and starting the autoplay timer. It returns an
+  // interface object so callers can control the instance (start/stop/show).
   function buildCarousel() {
     const container = document.createElement('div');
     container.className = 'simple-carousel';
@@ -56,8 +82,12 @@
     slidesWrap.className = 'slides';
     container.appendChild(slidesWrap);
 
+    // 1) Create slide elements from the `slides` data.
+    //    Each slide receives a `data-index` so we can correlate slides with
+    //    indicators without relying on DOM order traversal at runtime.
     slides.forEach((s, i) => {
       const slide = document.createElement('div');
+      // mark the first slide active so the CSS reveals it by default
       slide.className = 'slide' + (i === 0 ? ' active' : '');
       slide.dataset.index = i;
 
@@ -70,6 +100,10 @@
     });
 
     // indicators
+    // 2) Create indicators (dots) and wire them to the slides.
+    //    Using buttons gives us keyboard accessibility for free. Each button
+    //    stores a `data-index` mirroring the slides' indices; clicking a dot
+    //    calls `show(index)` which centralizes state updates.
     const indicators = document.createElement('div');
     indicators.className = 'indicators';
     slides.forEach((_, i) => {
@@ -106,37 +140,85 @@
 
     const slideElems = slidesWrap.querySelectorAll('.slide');
     const dotElems = indicators.querySelectorAll('.dot');
+
+    // --- State management & timing ---
+    // `current` holds the index of the visible slide. We keep this as the
+    // single source of truth for which slide is active. All UI updates (class
+    // toggles, aria updates if added) derive from this value.
     let current = 0;
+
+    // `total` caches the number of slides so we avoid querying the DOM inside
+    // tight loops. This is a small optimization and makes reasoning easier.
     const total = slideElems.length;
+
+    // `timer` stores the ID returned by setInterval so we can stop it later.
+    // It is `null` when autoplay is paused or not running.
     let timer = null;
+
+    // Autoplay interval (ms). Keep this constant near the top of the file so
+    // it's easy to tweak as a single-setting tuning parameter for UX tests.
     const interval = 3000; // 3s
 
+    // `show(index)` is the single function that performs the visible-state
+    // transition. Responsibilities:
+    // - normalize the incoming index (allow negative values or values >= total)
+    // - update the `current` state
+    // - mutate the DOM to reflect the new state (toggle `.active` classes)
+    // - (optional) update accessibility attributes such as `aria-hidden` or
+    //   `aria-current` when present
+    // Centralizing these steps in one function reduces bugs caused by
+    // duplicated state changes in multiple event handlers.
     function show(index) {
-      if (index === current) return;
+      // normalize to [0, total)
+      const normalized = ((index % total) + total) % total;
+      if (normalized === current) return; // no-op if already visible
+
+      // remove active from previous
       slideElems[current].classList.remove('active');
       dotElems[current].classList.remove('active');
-      current = (index + total) % total;
+
+      // update state
+      current = normalized;
+
+      // add active to new
       slideElems[current].classList.add('active');
       dotElems[current].classList.add('active');
     }
+
+    // Convenience wrappers keep call sites readable. They delegate to show()
+    // so all side-effects remain in one place.
     function nextSlide() { show(current + 1); }
     function prevSlide() { show(current - 1); }
+
+    // Start/stop control the autoplay timer. `start()` first ensures any
+    // existing timer is cleared (avoid double timers after repeated starts),
+    // then begins a fresh interval. `stop()` clears and nulls the timer.
+    // These are intentionally simple; in a larger app you might debounce or
+    // back off after manual interaction to be less intrusive.
     function start() { stop(); timer = setInterval(nextSlide, interval); }
     function stop() { if (timer) { clearInterval(timer); timer = null; } }
 
-    // Pause on hover/focus
+    // Interaction wiring: pause autoplay on hover/focus, resume on leave.
+    // This pattern improves accessibility and reduces motion for users who are
+    // interacting with the control. We listen for `focusin`/`focusout` so that
+    // keyboard users (tabbing into buttons) also pause the rotation.
     container.addEventListener('mouseenter', stop);
     container.addEventListener('mouseleave', start);
     container.addEventListener('focusin', stop);
     container.addEventListener('focusout', start);
 
-    // keyboard navigation
+    // keyboard navigation: attach left/right arrows to move between slides.
+    // We set tabIndex so the container can receive keyboard events when focused.
+    // For clarity, this simple handler does not stop propagation; a larger
+    // component might provide finer control or route events to focused child
+    // controls instead.
     container.tabIndex = -1;
     container.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight') nextSlide();
       if (e.key === 'ArrowLeft') prevSlide();
     });
 
+    // start autoplay by default
     start();
     return { container, nextSlide, prevSlide, show, start, stop };
   }

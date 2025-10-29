@@ -107,6 +107,47 @@ Suggested small improvements (optional):
 - Add `aria-hidden="true"` to non-active slides and `aria-current` to the active dot.
 - Hide indicators/controls when there is 1 or 0 slides.
 
+## Carousel — State management & timing explained
+
+This section describes the carousel's runtime state and timing model. It mirrors the comments inside `src/index.js` and is intended to help students reason about the control flow.
+
+Key variables and their roles:
+
+- `current` (number): the index of the slide that is currently visible. This is the single source of truth for which slide to display.
+- `total` (number): the total number of slides (cached from DOM). Used to normalize indexes and for bounds checks.
+- `timer` (number|null): the ID returned by `setInterval` when autoplay is active. `null` means autoplay is paused/stopped.
+- `interval` (number): the autoplay period in milliseconds (3000ms by default).
+
+How transitions happen (`show(index)`):
+
+- `show` normalizes the requested index to a valid range (so callers can pass negative or large indexes without error).
+- If the normalized index equals `current`, `show` returns early (cheap no-op).
+- Otherwise, `show` removes the `.active` class from the previous slide and indicator, updates `current`, and adds `.active` to the new slide and dot.
+
+Why centralize transitions in `show()`?
+
+- Centralizing prevents bugs from duplicated DOM updates across multiple event handlers.
+- It makes it easy to add extra side-effects later (e.g., update `aria-hidden`, animate captions, or emit analytics events) by changing just one function.
+
+Autoplay control (`start()` / `stop()`):
+
+- `start()` clears any existing timer (defensive) and calls `setInterval(nextSlide, interval)`.
+- `stop()` clears the timer and sets it to `null`.
+- The carousel pauses autoplay on `mouseenter` and `focusin`, and resumes on `mouseleave` and `focusout`. This improves usability for keyboard and mouse users.
+
+Keyboard navigation and focusability:
+
+- The carousel container gets `tabIndex=-1` so it can receive keyboard events if focused programmatically or by assistive tech.
+- Left/Right arrows trigger `prevSlide()` / `nextSlide()` which both delegate to `show()`.
+
+Edge cases and classroom exercises:
+
+- Exercise: Modify `show()` to add `aria-hidden="true"` to non-active slides and `aria-current="true"` to the active dot. Test with a screen reader.
+- Exercise: Change the autoplay strategy so that manual interaction (click a dot) pauses autoplay for N seconds rather than indefinitely.
+- Edge case: if `slides.length === 0`, ensure the carousel does not attempt to build controls or start a timer; show a graceful fallback message instead.
+
+This prose should now match the in-file comments in `src/index.js`. Keep them in sync when you refactor or change timing behavior.
+
 ---
 
 ## Aside element rationale
