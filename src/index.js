@@ -168,8 +168,11 @@
       // Try candidate URLs sequentially so the browser resolves the one that
       // actually exists on the current server mapping (Live Server, GH Pages, etc.).
       const candidates = buildImageCandidates(s.img);
-      let cIndex = 0;
-      img.src = candidates[cIndex];
+  let cIndex = 0;
+  // Expose candidate list on the element for easier inspection in DevTools
+  try { img.dataset.candidates = candidates.join(','); } catch (e) {}
+  console.debug && console.debug('carousel: slide', i + 1, 'candidates', candidates);
+  img.src = candidates[cIndex];
       img.onerror = () => {
         if (cIndex < candidates.length - 1) {
           cIndex += 1;
