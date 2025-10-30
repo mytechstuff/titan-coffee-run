@@ -126,7 +126,7 @@
     .simple-carousel { max-width:1100px; margin:18px auto; position:relative; border-radius:12px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.06); }
     .simple-carousel .slides { position:relative; height:0; padding-bottom:35%; }
     .simple-carousel .slide { position:absolute; inset:0; opacity:0; transition:opacity .6s ease; display:flex; align-items:center; justify-content:center; pointer-events:none; }
-    .simple-carousel .slide img { width:100%; height:100%; object-fit:cover; display:block; }
+  .simple-carousel .slide img { width:100%; height:100%; object-fit:contain; display:block; }
     .simple-carousel .slide.active { opacity:1; pointer-events:auto; }
     .simple-carousel .indicators { position:absolute; right:12px; bottom:12px; display:flex; gap:8px; }
     .simple-carousel .dot { width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,0.6); border:1px solid rgba(0,0,0,0.08); cursor:pointer; }
