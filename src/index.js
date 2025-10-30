@@ -37,39 +37,9 @@
   // We store only filenames here so other pages (root vs public preview) can
   // resolve the correct path at runtime using resolveImagePath().
   const slides = [
-    // NOTE: switched to .jpg so you can drop real JPEG assets into public/assets/img/
-    // Each slide can optionally provide `objectPosition`, and a `srcsetArray` of
-    // responsive crops. `srcsetArray` should be an array of { file, width }.
-    { 
-      alt: 'Freshly brewed coffee', 
-      img: 'banner-hero.jpg', 
-      objectPosition: 'top center',
-      srcsetArray: [ { file: 'banner-hero-800.jpg', width: 800 }, { file: 'banner-hero-1600.jpg', width: 1600 } ],
-      sizes: '(max-width:640px) 100vw, 1100px'
-    },
-    { 
-      alt: 'Iced nitro cold brew', 
-      img: 'carousel-1.jpg', 
-      objectPosition: 'center center',
-      srcsetArray: [ { file: 'carousel-1-600.jpg', width: 600 }, { file: 'carousel-1-1200.jpg', width: 1200 } ],
-      sizes: '(max-width:640px) 100vw, 800px'
-    },
-    { 
-      alt: 'Almond latte special', 
-      img: 'carousel-2.jpg', 
-      objectPosition: 'top center',
-      srcsetArray: [ { file: 'carousel-2-600.jpg', width: 600 }, { file: 'carousel-2-1200.jpg', width: 1200 } ],
-      sizes: '(max-width:640px) 100vw, 800px'
-    },
-    // extra slide requested by user — expects public/assets/img/carousel-4.png
-    { 
-      alt: 'Student study special', 
-      img: 'carousel-4.png', 
-      objectPosition: 'center top',
-      // PNGs can also be supplied as responsive crops if you have them
-      srcsetArray: [ { file: 'carousel-4-600.png', width: 600 }, { file: 'carousel-4-1200.png', width: 1200 } ],
-      sizes: '(max-width:640px) 100vw, 800px'
-    }
+    { alt: 'Freshly brewed coffee', img: 'banner-hero.svg' },
+    { alt: 'Iced nitro cold brew', img: 'carousel-1.svg' },
+    { alt: 'Almond latte special', img: 'carousel-2.svg' }
   ];
 
   // Helper: resolve the correct relative path for images depending on whether
@@ -96,21 +66,17 @@
   // and class scoping via BEM or CSS modules.
   const style = document.createElement('style');
   style.textContent = `
-  .simple-carousel { max-width:1100px; margin:18px auto; position:relative; border-radius:12px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.06); background:var(--bg); }
-    /* taller desktop aspect to show more of the image (reduce aggressive top-cropping) */
-    .simple-carousel .slides { position:relative; height:0; padding-bottom:40%; }
+    .simple-carousel { max-width:1100px; margin:18px auto; position:relative; border-radius:12px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.06); }
+    .simple-carousel .slides { position:relative; height:0; padding-bottom:35%; }
     .simple-carousel .slide { position:absolute; inset:0; opacity:0; transition:opacity .6s ease; display:flex; align-items:center; justify-content:center; }
-   /* Show the full image (no cropping). This uses contain so the whole image
-     is visible; letterboxing may appear depending on the image aspect ratio. */
-  .simple-carousel .slide img { width:100%; height:100%; object-fit:contain; object-position:center center; display:block; background:var(--bg); }
+    .simple-carousel .slide img { width:100%; height:100%; object-fit:cover; display:block; }
     .simple-carousel .slide.active { opacity:1; }
     .simple-carousel .indicators { position:absolute; right:12px; bottom:12px; display:flex; gap:8px; }
     .simple-carousel .dot { width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,0.6); border:1px solid rgba(0,0,0,0.08); cursor:pointer; }
     .simple-carousel .dot.active { background:#fff; box-shadow:0 0 0 4px rgba(255,255,255,0.06) inset; }
     .simple-carousel .controls { position:absolute; top:50%; left:0; right:0; display:flex; justify-content:space-between; transform:translateY(-50%); pointer-events:none; }
     .simple-carousel .btn { pointer-events:auto; background:rgba(0,0,0,0.45); color:#fff; border:0; padding:8px 10px; margin:0 8px; border-radius:8px; cursor:pointer; }
-    @media (max-width:980px){ .simple-carousel .slides{padding-bottom:48%;} }
-    @media (max-width:640px){ .simple-carousel .slides{padding-bottom:60%} }
+    @media (max-width:640px){ .simple-carousel .slides{padding-bottom:50%} }
   `;
   document.head.appendChild(style);
 
@@ -139,18 +105,10 @@
   // Use resolveImagePath to find the image under public/assets/img or
   // public preview's assets folder. Add lazy loading and async decoding for
   // better performance on mobile.
-      img.src = resolveImagePath(s.img);
+  img.src = resolveImagePath(s.img);
   img.alt = s.alt || '';
   img.loading = 'lazy';
   img.decoding = 'async';
-  // allow per-slide control of image positioning to prevent unwanted crops
-  if (s.objectPosition) img.style.objectPosition = s.objectPosition;
-      // wire up responsive srcset if provided: slides can include an array of
-      // { file, width } entries that will be resolved via resolveImagePath().
-      if (Array.isArray(s.srcsetArray) && s.srcsetArray.length) {
-        img.srcset = s.srcsetArray.map(x => `${resolveImagePath(x.file)} ${x.width}w`).join(', ');
-        img.sizes = s.sizes || '(max-width:640px) 100vw, 1100px';
-      }
 
       slide.appendChild(img);
       slidesWrap.appendChild(slide);
