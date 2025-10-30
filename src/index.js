@@ -42,30 +42,22 @@
     {
       alt: 'Freshly brewed coffee',
       img: 'banner-hero.jpg',
-      objectPosition: 'top center',
-      srcsetArray: [ { file: 'banner-hero-800.jpg', width: 800 }, { file: 'banner-hero-1600.jpg', width: 1600 } ],
-      sizes: '(max-width:640px) 100vw, 1100px'
+      objectPosition: 'top center'
     },
     {
       alt: 'Iced nitro cold brew',
       img: 'carousel-1.jpg',
-      objectPosition: 'center center',
-      srcsetArray: [ { file: 'carousel-1-600.jpg', width: 600 }, { file: 'carousel-1-1200.jpg', width: 1200 } ],
-      sizes: '(max-width:640px) 100vw, 800px'
+      objectPosition: 'center center'
     },
     {
       alt: "Almond latte special",
       img: 'carousel-2.jpg',
-      objectPosition: 'top center',
-      srcsetArray: [ { file: 'carousel-2-600.jpg', width: 600 }, { file: 'carousel-2-1200.jpg', width: 1200 } ],
-      sizes: '(max-width:640px) 100vw, 800px'
+      objectPosition: 'top center'
     },
     {
       alt: 'Student study special',
       img: 'carousel-4.png',
-      objectPosition: 'center top',
-      srcsetArray: [ { file: 'carousel-4-600.png', width: 600 }, { file: 'carousel-4-1200.png', width: 1200 } ],
-      sizes: '(max-width:640px) 100vw, 800px'
+      objectPosition: 'center top'
     }
   ];
 
