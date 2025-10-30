@@ -136,9 +136,16 @@
 
       const img = document.createElement('img');
       // Use resolveImagePath to find the image under public/assets/img or
-      // public preview's assets folder. Add lazy loading and async decoding for
-      // better performance on mobile.
-      img.src = resolveImagePath(s.img);
+      // public preview's assets folder. Add a runtime fallback so we try both
+      // likely locations in case the server maps the site root differently.
+      // This helps when previewing from `/` vs `/public/` without manual edits.
+      const primarySrc = resolveImagePath(s.img);
+      const fallbackSrc = primarySrc.replace('./public/assets/img/', './assets/img/');
+      img.src = primarySrc;
+      img.onerror = () => {
+        // Only switch to fallback once to avoid infinite loops.
+        if (img.src !== fallbackSrc) img.src = fallbackSrc;
+      };
       img.alt = s.alt || '';
       img.loading = 'lazy';
       img.decoding = 'async';
@@ -146,6 +153,9 @@
       if (s.objectPosition) img.style.objectPosition = s.objectPosition;
       // wire up responsive srcset if provided
       if (Array.isArray(s.srcsetArray) && s.srcsetArray.length) {
+        // Build srcset using resolveImagePath; if these don't match the server
+        // layout the browser will still attempt to load `img.src` and trigger
+        // the onerror fallback above.
         img.srcset = s.srcsetArray.map(x => `${resolveImagePath(x.file)} ${x.width}w`).join(', ');
         img.sizes = s.sizes || '(max-width:640px) 100vw, 1100px';
       }
