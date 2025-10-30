@@ -93,17 +93,23 @@
   // and class scoping via BEM or CSS modules.
   const style = document.createElement('style');
   style.textContent = `
+    /* Reverted to simple full-width responsive image layout.
+       Previous implementation used a fixed aspect container and object-fit
+       which created letterboxing and a background blend. The user prefers
+       images to render at 100% width and scale height automatically on
+       small screens. */
     .simple-carousel { max-width:1100px; margin:18px auto; position:relative; border-radius:12px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.06); }
-    .simple-carousel .slides { position:relative; height:0; padding-bottom:35%; }
-    .simple-carousel .slide { position:absolute; inset:0; opacity:0; transition:opacity .6s ease; display:flex; align-items:center; justify-content:center; }
-    .simple-carousel .slide img { width:100%; height:100%; object-fit:cover; display:block; }
+    /* Let slides flow naturally; images will set the height via height:auto. */
+    .simple-carousel .slides { position:relative; }
+    .simple-carousel .slide { position:relative; opacity:0; transition:opacity .6s ease; display:block; }
+    .simple-carousel .slide img { width:100%; height:auto; object-fit:contain; display:block; }
     .simple-carousel .slide.active { opacity:1; }
     .simple-carousel .indicators { position:absolute; right:12px; bottom:12px; display:flex; gap:8px; }
     .simple-carousel .dot { width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,0.6); border:1px solid rgba(0,0,0,0.08); cursor:pointer; }
     .simple-carousel .dot.active { background:#fff; box-shadow:0 0 0 4px rgba(255,255,255,0.06) inset; }
     .simple-carousel .controls { position:absolute; top:50%; left:0; right:0; display:flex; justify-content:space-between; transform:translateY(-50%); pointer-events:none; }
     .simple-carousel .btn { pointer-events:auto; background:rgba(0,0,0,0.45); color:#fff; border:0; padding:8px 10px; margin:0 8px; border-radius:8px; cursor:pointer; }
-    @media (max-width:640px){ .simple-carousel .slides{padding-bottom:50%} }
+    @media (max-width:640px){ .simple-carousel .slides{ /* small screens handled by width:100%/height:auto on images */ } }
   `;
   document.head.appendChild(style);
 
