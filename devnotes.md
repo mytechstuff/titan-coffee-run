@@ -26,14 +26,20 @@ This document is the living developer notes for the project. Add new sections un
 
 Key files and folders (top-level):
 
-- `index.html` — root page used for GitHub Pages (loads `./src/index.js`).
-- `public/index.html` — demo preview file (useful for local preview setups).
+- `index.html` — canonical root page used for GitHub Pages (loads `./src/index.js`).
 - `src/` — source files (JS and styles):
   - `src/index.js` — carousel module (ES module). Injects the carousel into `<main>`.
   - `src/styles/main.css` — extracted stylesheet for layout and theme variables.
+- `public/` — static runtime assets (images, etc.). Keep published assets here when ready.
 - `README.md` — project README.
 
-Place images and final public assets in `public/` (e.g. `public/assets/`) when ready to publish. See "Styles and asset placement" below for options.
+Planned pages (deferred):
+
+- `menu.html` — static menu page with sample items and pricing (generic content).
+- `locations.html` — addresses, hours, and placeholder map or direction links.
+- `contact.html` — contact details and a simple contact form placeholder (mailto or integration later).
+
+These pages will reuse the carousel by including the same module script (`<script type="module" src="./src/index.js"></script>`). The work is intentionally deferred; see the project TODO list for the task.
 
 ---
 
