@@ -38,13 +38,38 @@
   // resolve the correct path at runtime using resolveImagePath().
   const slides = [
     // NOTE: switched to .jpg so you can drop real JPEG assets into public/assets/img/
-    // `objectPosition` is optional per slide and controls how the image is aligned
-    // inside the carousel (useful to avoid cropping important subjects).
-    { alt: 'Freshly brewed coffee', img: 'banner-hero.jpg', objectPosition: 'top center' },
-    { alt: 'Iced nitro cold brew', img: 'carousel-1.jpg', objectPosition: 'center center' },
-    { alt: 'Almond latte special', img: 'carousel-2.jpg', objectPosition: 'top center' },
+    // Each slide can optionally provide `objectPosition`, and a `srcsetArray` of
+    // responsive crops. `srcsetArray` should be an array of { file, width }.
+    { 
+      alt: 'Freshly brewed coffee', 
+      img: 'banner-hero.jpg', 
+      objectPosition: 'top center',
+      srcsetArray: [ { file: 'banner-hero-800.jpg', width: 800 }, { file: 'banner-hero-1600.jpg', width: 1600 } ],
+      sizes: '(max-width:640px) 100vw, 1100px'
+    },
+    { 
+      alt: 'Iced nitro cold brew', 
+      img: 'carousel-1.jpg', 
+      objectPosition: 'center center',
+      srcsetArray: [ { file: 'carousel-1-600.jpg', width: 600 }, { file: 'carousel-1-1200.jpg', width: 1200 } ],
+      sizes: '(max-width:640px) 100vw, 800px'
+    },
+    { 
+      alt: 'Almond latte special', 
+      img: 'carousel-2.jpg', 
+      objectPosition: 'top center',
+      srcsetArray: [ { file: 'carousel-2-600.jpg', width: 600 }, { file: 'carousel-2-1200.jpg', width: 1200 } ],
+      sizes: '(max-width:640px) 100vw, 800px'
+    },
     // extra slide requested by user — expects public/assets/img/carousel-4.png
-    { alt: 'Student study special', img: 'carousel-4.png', objectPosition: 'center top' }
+    { 
+      alt: 'Student study special', 
+      img: 'carousel-4.png', 
+      objectPosition: 'center top',
+      // PNGs can also be supplied as responsive crops if you have them
+      srcsetArray: [ { file: 'carousel-4-600.png', width: 600 }, { file: 'carousel-4-1200.png', width: 1200 } ],
+      sizes: '(max-width:640px) 100vw, 800px'
+    }
   ];
 
   // Helper: resolve the correct relative path for images depending on whether
@@ -114,12 +139,18 @@
   // Use resolveImagePath to find the image under public/assets/img or
   // public preview's assets folder. Add lazy loading and async decoding for
   // better performance on mobile.
-  img.src = resolveImagePath(s.img);
+      img.src = resolveImagePath(s.img);
   img.alt = s.alt || '';
   img.loading = 'lazy';
   img.decoding = 'async';
   // allow per-slide control of image positioning to prevent unwanted crops
   if (s.objectPosition) img.style.objectPosition = s.objectPosition;
+      // wire up responsive srcset if provided: slides can include an array of
+      // { file, width } entries that will be resolved via resolveImagePath().
+      if (Array.isArray(s.srcsetArray) && s.srcsetArray.length) {
+        img.srcset = s.srcsetArray.map(x => `${resolveImagePath(x.file)} ${x.width}w`).join(', ');
+        img.sizes = s.sizes || '(max-width:640px) 100vw, 1100px';
+      }
 
       slide.appendChild(img);
       slidesWrap.appendChild(slide);

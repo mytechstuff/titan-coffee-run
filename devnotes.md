@@ -150,6 +150,36 @@ This prose should now match the in-file comments in `src/index.js`. Keep them in
 
 ---
 
+## Preparing responsive crops & using srcset
+
+For the best visual results you should serve images that are pre-cropped to the
+carousel's aspect ratio for each target size (mobile/desktop). `src/index.js`
+now supports a `srcsetArray` per slide which is an array of objects with the
+shape `{ file: 'name-800.jpg', width: 800 }` and an optional `sizes` string.
+
+How to prepare assets:
+
+1. Pick a target aspect ratio (we use the carousel padding-bottom values, e.g., 40% for desktop). Export a desktop crop (e.g. 1600×640) and a mobile crop (e.g. 800×960) for each slide.
+2. Name files consistently (e.g., `banner-hero-800.jpg`, `banner-hero-1600.jpg`). Place them in `public/assets/img/`.
+3. Add entries to the `slides` array in `src/index.js` or keep the default examples already present. The JS will build a `srcset` from the `srcsetArray` and set `sizes`.
+
+Why this works: the browser picks the best image candidate from `srcset` for the current viewport and DPR, giving you crisp images and predictable cropping.
+
+Example slide entry (already in `src/index.js`):
+
+```
+{ 
+  alt: 'Freshly brewed coffee',
+  img: 'banner-hero.jpg',
+  objectPosition: 'top center',
+  srcsetArray: [ { file: 'banner-hero-800.jpg', width: 800 }, { file: 'banner-hero-1600.jpg', width: 1600 } ],
+  sizes: '(max-width:640px) 100vw, 1100px'
+}
+```
+
+If you want, I can add a small script that reads `public/assets/img/` and prints a suggested `srcsetArray` block (file discovery + widths) for each slide to speed up asset prep.
+
+
 ## Aside element rationale
 
 - The `<aside>` contains complementary information: pickup time and a short blurb. It is related to the page content but not part of the main narrative. Using `<aside>` is semantic and signals to assistive tech and search engines that this box is tangential.
