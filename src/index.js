@@ -37,9 +37,10 @@
   // We store only filenames here so other pages (root vs public preview) can
   // resolve the correct path at runtime using resolveImagePath().
   const slides = [
-    { alt: 'Freshly brewed coffee', img: 'banner-hero.svg' },
-    { alt: 'Iced nitro cold brew', img: 'carousel-1.svg' },
-    { alt: 'Almond latte special', img: 'carousel-2.svg' }
+    // NOTE: switched to .jpg so you can drop real JPEG assets into public/assets/img/
+    { alt: 'Freshly brewed coffee', img: 'banner-hero.jpg' },
+    { alt: 'Iced nitro cold brew', img: 'carousel-1.jpg' },
+    { alt: 'Almond latte special', img: 'carousel-2.jpg' }
   ];
 
   // Helper: resolve the correct relative path for images depending on whether
