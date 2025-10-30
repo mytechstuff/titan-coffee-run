@@ -33,20 +33,75 @@
   // deterministic and testable.
   // Fields: { alt, img } where `img` is a URL or data-URI and `alt` is the
   // accessible textual description for screen readers.
+  // Slide sources are now external image files stored under public/assets/img.
+  // We store only filenames here so other pages (root vs public preview) can
+  // resolve the correct path at runtime using resolveImagePath().
   const slides = [
+    // Slides reference files under public/assets/img/.
+    // Provide optional `objectPosition` and `srcsetArray` for responsive crops.
     {
       alt: 'Freshly brewed coffee',
-      img: 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420"><rect width="100%" height="100%" fill="#f7efe9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="40" fill="#6b3f2a" font-family="Arial">Freshly brewed — Titan Coffee Run</text></svg>`)
+      img: 'banner-hero.jpg',
+      objectPosition: 'top center',
+      srcsetArray: [ { file: 'banner-hero-800.jpg', width: 800 }, { file: 'banner-hero-1600.jpg', width: 1600 } ],
+      sizes: '(max-width:640px) 100vw, 1100px'
     },
     {
       alt: 'Iced nitro cold brew',
-      img: 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420"><rect width="100%" height="100%" fill="#eefaf6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="40" fill="#155e63" font-family="Arial">Iced Nitro Cold Brew</text></svg>`)
+      img: 'carousel-1.jpg',
+      objectPosition: 'center center',
+      srcsetArray: [ { file: 'carousel-1-600.jpg', width: 600 }, { file: 'carousel-1-1200.jpg', width: 1200 } ],
+      sizes: '(max-width:640px) 100vw, 800px'
     },
     {
-      alt: 'Almond latte special',
-      img: 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420"><rect width="100%" height="100%" fill="#fff7f2"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="40" fill="#8b5e3c" font-family="Arial">Almond Latte — Today's Special</text></svg>`)
+      alt: "Almond latte special",
+      img: 'carousel-2.jpg',
+      objectPosition: 'top center',
+      srcsetArray: [ { file: 'carousel-2-600.jpg', width: 600 }, { file: 'carousel-2-1200.jpg', width: 1200 } ],
+      sizes: '(max-width:640px) 100vw, 800px'
+    },
+    {
+      alt: 'Student study special',
+      img: 'carousel-4.png',
+      objectPosition: 'center top',
+      srcsetArray: [ { file: 'carousel-4-600.png', width: 600 }, { file: 'carousel-4-1200.png', width: 1200 } ],
+      sizes: '(max-width:640px) 100vw, 800px'
     }
   ];
+
+  // Helper: resolve the correct relative path for images depending on whether
+  // the current document is the root index or the demo page inside /public/.
+  // - If the page lives under /public/ (e.g., public/index.html), images are
+  //   in ./assets/img/
+  // - Otherwise (root index.html), images are in ./public/assets/img/
+  // Build candidate absolute URLs for an asset filename using the module base
+  // (import.meta.url). We try several likely locations so the same code works
+  // when previewing with Live Server, from /public, or on GitHub Pages where the
+  // site may be served from a repo subpath.
+  function buildImageCandidates(filename) {
+    try {
+      // Use relative paths from this module to construct absolute URLs.
+      const baseCandidates = [
+        new URL('../public/assets/img/' + filename, import.meta.url).href,
+        new URL('../assets/img/' + filename, import.meta.url).href,
+        new URL('./public/assets/img/' + filename, import.meta.url).href,
+        new URL('./assets/img/' + filename, import.meta.url).href,
+        // fallback using location origin + path
+        location.origin + '/public/assets/img/' + filename,
+        location.origin + '/assets/img/' + filename
+      ];
+      // Deduplicate while preserving order
+      return [...new Set(baseCandidates)];
+    } catch (e) {
+      return ['./public/assets/img/' + filename, './assets/img/' + filename];
+    }
+  }
+
+  // Convenience for srcset building: return the most likely candidate (first)
+  function resolveImagePath(filename) {
+    const c = buildImageCandidates(filename);
+    return c && c.length ? c[0] : './public/assets/img/' + filename;
+  }
 
   // --- Styles injection ---
   // We append a small stylesheet programmatically so the carousel is self-contained.
@@ -56,11 +111,16 @@
   // and class scoping via BEM or CSS modules.
   const style = document.createElement('style');
   style.textContent = `
+    /* Restored the stable overlay carousel layout used previously.
+       This uses a fixed aspect container (padding-bottom) and absolutely
+       positioned slides so only the active slide is visible and clickable.
+       It avoids flicker and unstable click targets caused by stacked,
+       flowing slide elements. */
     .simple-carousel { max-width:1100px; margin:18px auto; position:relative; border-radius:12px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.06); }
     .simple-carousel .slides { position:relative; height:0; padding-bottom:35%; }
-    .simple-carousel .slide { position:absolute; inset:0; opacity:0; transition:opacity .6s ease; display:flex; align-items:center; justify-content:center; }
+    .simple-carousel .slide { position:absolute; inset:0; opacity:0; transition:opacity .6s ease; display:flex; align-items:center; justify-content:center; pointer-events:none; }
     .simple-carousel .slide img { width:100%; height:100%; object-fit:cover; display:block; }
-    .simple-carousel .slide.active { opacity:1; }
+    .simple-carousel .slide.active { opacity:1; pointer-events:auto; }
     .simple-carousel .indicators { position:absolute; right:12px; bottom:12px; display:flex; gap:8px; }
     .simple-carousel .dot { width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,0.6); border:1px solid rgba(0,0,0,0.08); cursor:pointer; }
     .simple-carousel .dot.active { background:#fff; box-shadow:0 0 0 4px rgba(255,255,255,0.06) inset; }
@@ -92,11 +152,52 @@
       slide.dataset.index = i;
 
       const img = document.createElement('img');
-      img.src = s.img;
+      // Use resolveImagePath to find the image under public/assets/img or
+      // public preview's assets folder. Add a runtime fallback so we try both
+      // likely locations in case the server maps the site root differently.
+      // This helps when previewing from `/` vs `/public/` without manual edits.
+      const primarySrc = resolveImagePath(s.img);
+      const fallbackSrc = primarySrc.replace('./public/assets/img/', './assets/img/');
+      // Try candidate URLs sequentially so the browser resolves the one that
+      // actually exists on the current server mapping (Live Server, GH Pages, etc.).
+      const candidates = buildImageCandidates(s.img);
+      let cIndex = 0;
+      img.src = candidates[cIndex];
+      img.onerror = () => {
+        if (cIndex < candidates.length - 1) {
+          cIndex += 1;
+          img.src = candidates[cIndex];
+        }
+      };
       img.alt = s.alt || '';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      // apply optional object position per-slide to control cropping point
+      if (s.objectPosition) img.style.objectPosition = s.objectPosition;
+      // wire up responsive srcset if provided
+      if (Array.isArray(s.srcsetArray) && s.srcsetArray.length) {
+        // Build srcset using our resolveImagePath helper (first candidate).
+        img.srcset = s.srcsetArray.map(x => `${resolveImagePath(x.file)} ${x.width}w`).join(', ');
+        img.sizes = s.sizes || '(max-width:640px) 100vw, 1100px';
+      }
 
       slide.appendChild(img);
       slidesWrap.appendChild(slide);
+      // Add simple load/error reporting for diagnostics
+      (function (imgRef, slideIndex) {
+        const entry = document.createElement('div');
+        entry.textContent = `Slide ${slideIndex + 1}: trying ${imgRef.src}`;
+        entry.style.opacity = '0.9';
+        debug.appendChild(entry);
+        imgRef.addEventListener('load', () => {
+          entry.textContent = `Slide ${slideIndex + 1}: loaded ${imgRef.currentSrc || imgRef.src}`;
+          entry.style.color = 'green';
+        });
+        imgRef.addEventListener('error', () => {
+          entry.textContent = `Slide ${slideIndex + 1}: failed ${imgRef.src}`;
+          entry.style.color = 'crimson';
+        });
+      })(img, i);
     });
 
     // indicators
@@ -140,6 +241,13 @@
 
     const slideElems = slidesWrap.querySelectorAll('.slide');
     const dotElems = indicators.querySelectorAll('.dot');
+
+  // Diagnostic panel: show resolved image URLs and load status for each slide.
+  const debug = document.createElement('div');
+  debug.style.cssText = 'font-size:.85rem;color:var(--muted);margin-top:.5rem;max-width:1100px;margin-left:auto;margin-right:auto;padding:0 1rem';
+  debug.id = 'carousel-debug';
+  // append below the carousel container so maintainers can see load status
+  container.insertAdjacentElement('afterend', debug);
 
     // --- State management & timing ---
     // `current` holds the index of the visible slide. We keep this as the
