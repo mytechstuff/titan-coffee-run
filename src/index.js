@@ -40,7 +40,9 @@
     // NOTE: switched to .jpg so you can drop real JPEG assets into public/assets/img/
     { alt: 'Freshly brewed coffee', img: 'banner-hero.jpg' },
     { alt: 'Iced nitro cold brew', img: 'carousel-1.jpg' },
-    { alt: 'Almond latte special', img: 'carousel-2.jpg' }
+    { alt: 'Almond latte special', img: 'carousel-2.jpg' },
+    // extra slide requested by user — expects public/assets/img/carousel-4.png
+    { alt: 'Student study special', img: 'carousel-4.png' }
   ];
 
   // Helper: resolve the correct relative path for images depending on whether
@@ -68,16 +70,19 @@
   const style = document.createElement('style');
   style.textContent = `
     .simple-carousel { max-width:1100px; margin:18px auto; position:relative; border-radius:12px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.06); }
-    .simple-carousel .slides { position:relative; height:0; padding-bottom:35%; }
+    /* taller desktop aspect to show more of the image (reduce aggressive top-cropping) */
+    .simple-carousel .slides { position:relative; height:0; padding-bottom:40%; }
     .simple-carousel .slide { position:absolute; inset:0; opacity:0; transition:opacity .6s ease; display:flex; align-items:center; justify-content:center; }
-    .simple-carousel .slide img { width:100%; height:100%; object-fit:cover; display:block; }
+    /* Keep cover behavior but prefer the top of images so banners don't crop above the subject */
+    .simple-carousel .slide img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
     .simple-carousel .slide.active { opacity:1; }
     .simple-carousel .indicators { position:absolute; right:12px; bottom:12px; display:flex; gap:8px; }
     .simple-carousel .dot { width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,0.6); border:1px solid rgba(0,0,0,0.08); cursor:pointer; }
     .simple-carousel .dot.active { background:#fff; box-shadow:0 0 0 4px rgba(255,255,255,0.06) inset; }
     .simple-carousel .controls { position:absolute; top:50%; left:0; right:0; display:flex; justify-content:space-between; transform:translateY(-50%); pointer-events:none; }
     .simple-carousel .btn { pointer-events:auto; background:rgba(0,0,0,0.45); color:#fff; border:0; padding:8px 10px; margin:0 8px; border-radius:8px; cursor:pointer; }
-    @media (max-width:640px){ .simple-carousel .slides{padding-bottom:50%} }
+    @media (max-width:980px){ .simple-carousel .slides{padding-bottom:48%;} }
+    @media (max-width:640px){ .simple-carousel .slides{padding-bottom:60%} }
   `;
   document.head.appendChild(style);
 
