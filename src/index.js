@@ -74,15 +74,33 @@
   // - If the page lives under /public/ (e.g., public/index.html), images are
   //   in ./assets/img/
   // - Otherwise (root index.html), images are in ./public/assets/img/
-  function resolveImagePath(filename) {
+  // Build candidate absolute URLs for an asset filename using the module base
+  // (import.meta.url). We try several likely locations so the same code works
+  // when previewing with Live Server, from /public, or on GitHub Pages where the
+  // site may be served from a repo subpath.
+  function buildImageCandidates(filename) {
     try {
-      const path = location && location.pathname ? location.pathname : '/';
-      const inPublic = path.includes('/public/') || path.endsWith('/public') || path.endsWith('/public/index.html');
-      const base = inPublic ? './assets/img/' : './public/assets/img/';
-      return base + filename;
+      // Use relative paths from this module to construct absolute URLs.
+      const baseCandidates = [
+        new URL('../public/assets/img/' + filename, import.meta.url).href,
+        new URL('../assets/img/' + filename, import.meta.url).href,
+        new URL('./public/assets/img/' + filename, import.meta.url).href,
+        new URL('./assets/img/' + filename, import.meta.url).href,
+        // fallback using location origin + path
+        location.origin + '/public/assets/img/' + filename,
+        location.origin + '/assets/img/' + filename
+      ];
+      // Deduplicate while preserving order
+      return [...new Set(baseCandidates)];
     } catch (e) {
-      return './public/assets/img/' + filename;
+      return ['./public/assets/img/' + filename, './assets/img/' + filename];
     }
+  }
+
+  // Convenience for srcset building: return the most likely candidate (first)
+  function resolveImagePath(filename) {
+    const c = buildImageCandidates(filename);
+    return c && c.length ? c[0] : './public/assets/img/' + filename;
   }
 
   // --- Styles injection ---
@@ -140,10 +158,16 @@
       // This helps when previewing from `/` vs `/public/` without manual edits.
       const primarySrc = resolveImagePath(s.img);
       const fallbackSrc = primarySrc.replace('./public/assets/img/', './assets/img/');
-      img.src = primarySrc;
+      // Try candidate URLs sequentially so the browser resolves the one that
+      // actually exists on the current server mapping (Live Server, GH Pages, etc.).
+      const candidates = buildImageCandidates(s.img);
+      let cIndex = 0;
+      img.src = candidates[cIndex];
       img.onerror = () => {
-        // Only switch to fallback once to avoid infinite loops.
-        if (img.src !== fallbackSrc) img.src = fallbackSrc;
+        if (cIndex < candidates.length - 1) {
+          cIndex += 1;
+          img.src = candidates[cIndex];
+        }
       };
       img.alt = s.alt || '';
       img.loading = 'lazy';
@@ -152,15 +176,28 @@
       if (s.objectPosition) img.style.objectPosition = s.objectPosition;
       // wire up responsive srcset if provided
       if (Array.isArray(s.srcsetArray) && s.srcsetArray.length) {
-        // Build srcset using resolveImagePath; if these don't match the server
-        // layout the browser will still attempt to load `img.src` and trigger
-        // the onerror fallback above.
+        // Build srcset using our resolveImagePath helper (first candidate).
         img.srcset = s.srcsetArray.map(x => `${resolveImagePath(x.file)} ${x.width}w`).join(', ');
         img.sizes = s.sizes || '(max-width:640px) 100vw, 1100px';
       }
 
       slide.appendChild(img);
       slidesWrap.appendChild(slide);
+      // Add simple load/error reporting for diagnostics
+      (function (imgRef, slideIndex) {
+        const entry = document.createElement('div');
+        entry.textContent = `Slide ${slideIndex + 1}: trying ${imgRef.src}`;
+        entry.style.opacity = '0.9';
+        debug.appendChild(entry);
+        imgRef.addEventListener('load', () => {
+          entry.textContent = `Slide ${slideIndex + 1}: loaded ${imgRef.currentSrc || imgRef.src}`;
+          entry.style.color = 'green';
+        });
+        imgRef.addEventListener('error', () => {
+          entry.textContent = `Slide ${slideIndex + 1}: failed ${imgRef.src}`;
+          entry.style.color = 'crimson';
+        });
+      })(img, i);
     });
 
     // indicators
@@ -204,6 +241,13 @@
 
     const slideElems = slidesWrap.querySelectorAll('.slide');
     const dotElems = indicators.querySelectorAll('.dot');
+
+  // Diagnostic panel: show resolved image URLs and load status for each slide.
+  const debug = document.createElement('div');
+  debug.style.cssText = 'font-size:.85rem;color:var(--muted);margin-top:.5rem;max-width:1100px;margin-left:auto;margin-right:auto;padding:0 1rem';
+  debug.id = 'carousel-debug';
+  // append below the carousel container so maintainers can see load status
+  container.insertAdjacentElement('afterend', debug);
 
     // --- State management & timing ---
     // `current` holds the index of the visible slide. We keep this as the
