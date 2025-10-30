@@ -77,10 +77,12 @@
 
       // If the site is hosted under a repo subpath (GitHub Pages), derive
       // the repo base from the pathname (first non-empty segment) and try
-      // repo-prefixed absolute URLs first.
+      // repo-prefixed absolute URLs. Be conservative: skip this when the
+      // first segment looks like a filename (e.g. 'index.html') to avoid
+      // producing '/index.html/public/...' on local previews.
       try {
         const segs = location.pathname.split('/').filter(Boolean);
-        if (segs.length) {
+        if (segs.length && !segs[0].includes('.') && segs[0] !== 'public') {
           const repoBase = '/' + segs[0];
           candidates.push(location.origin + repoBase + '/public/assets/img/' + filename);
           candidates.push(location.origin + repoBase + '/assets/img/' + filename);
