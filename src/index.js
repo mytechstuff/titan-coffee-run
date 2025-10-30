@@ -37,9 +37,36 @@
   // We store only filenames here so other pages (root vs public preview) can
   // resolve the correct path at runtime using resolveImagePath().
   const slides = [
-    { alt: 'Freshly brewed coffee', img: 'banner-hero.svg' },
-    { alt: 'Iced nitro cold brew', img: 'carousel-1.svg' },
-    { alt: 'Almond latte special', img: 'carousel-2.svg' }
+    // Slides reference files under public/assets/img/.
+    // Provide optional `objectPosition` and `srcsetArray` for responsive crops.
+    {
+      alt: 'Freshly brewed coffee',
+      img: 'banner-hero.jpg',
+      objectPosition: 'top center',
+      srcsetArray: [ { file: 'banner-hero-800.jpg', width: 800 }, { file: 'banner-hero-1600.jpg', width: 1600 } ],
+      sizes: '(max-width:640px) 100vw, 1100px'
+    },
+    {
+      alt: 'Iced nitro cold brew',
+      img: 'carousel-1.jpg',
+      objectPosition: 'center center',
+      srcsetArray: [ { file: 'carousel-1-600.jpg', width: 600 }, { file: 'carousel-1-1200.jpg', width: 1200 } ],
+      sizes: '(max-width:640px) 100vw, 800px'
+    },
+    {
+      alt: "Almond latte special",
+      img: 'carousel-2.jpg',
+      objectPosition: 'top center',
+      srcsetArray: [ { file: 'carousel-2-600.jpg', width: 600 }, { file: 'carousel-2-1200.jpg', width: 1200 } ],
+      sizes: '(max-width:640px) 100vw, 800px'
+    },
+    {
+      alt: 'Student study special',
+      img: 'carousel-4.png',
+      objectPosition: 'center top',
+      srcsetArray: [ { file: 'carousel-4-600.png', width: 600 }, { file: 'carousel-4-1200.png', width: 1200 } ],
+      sizes: '(max-width:640px) 100vw, 800px'
+    }
   ];
 
   // Helper: resolve the correct relative path for images depending on whether
@@ -101,14 +128,21 @@
       slide.className = 'slide' + (i === 0 ? ' active' : '');
       slide.dataset.index = i;
 
-  const img = document.createElement('img');
-  // Use resolveImagePath to find the image under public/assets/img or
-  // public preview's assets folder. Add lazy loading and async decoding for
-  // better performance on mobile.
-  img.src = resolveImagePath(s.img);
-  img.alt = s.alt || '';
-  img.loading = 'lazy';
-  img.decoding = 'async';
+      const img = document.createElement('img');
+      // Use resolveImagePath to find the image under public/assets/img or
+      // public preview's assets folder. Add lazy loading and async decoding for
+      // better performance on mobile.
+      img.src = resolveImagePath(s.img);
+      img.alt = s.alt || '';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      // apply optional object position per-slide to control cropping point
+      if (s.objectPosition) img.style.objectPosition = s.objectPosition;
+      // wire up responsive srcset if provided
+      if (Array.isArray(s.srcsetArray) && s.srcsetArray.length) {
+        img.srcset = s.srcsetArray.map(x => `${resolveImagePath(x.file)} ${x.width}w`).join(', ');
+        img.sizes = s.sizes || '(max-width:640px) 100vw, 1100px';
+      }
 
       slide.appendChild(img);
       slidesWrap.appendChild(slide);
