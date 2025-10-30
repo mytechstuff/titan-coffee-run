@@ -161,12 +161,7 @@
   statusEl.setAttribute('aria-live', 'polite');
   container.appendChild(statusEl);
 
-    // Diagnostic panel: show resolved image URLs and load status for each slide.
-    const debug = document.createElement('div');
-    debug.style.cssText = 'font-size:.85rem;color:var(--muted);margin-top:.5rem;max-width:1100px;margin-left:auto;margin-right:auto;padding:0 1rem';
-    debug.id = 'carousel-debug';
-    // append below the carousel container so maintainers can see load status
-    container.insertAdjacentElement('afterend', debug);
+  // (No runtime diagnostics in production) — debug panel removed.
 
     // 1) Create slide elements from the `slides` data.
     //    Each slide receives a `data-index` so we can correlate slides with
@@ -185,22 +180,12 @@
       // public preview's assets folder. Add a runtime fallback so we try both
       // likely locations in case the server maps the site root differently.
       // This helps when previewing from `/` vs `/public/` without manual edits.
-      const primarySrc = resolveImagePath(s.img);
-      const fallbackSrc = primarySrc.replace('./public/assets/img/', './assets/img/');
-      // Try candidate URLs sequentially so the browser resolves the one that
-      // actually exists on the current server mapping (Live Server, GH Pages, etc.).
+      // Resolve an appropriate image URL for the current environment and use
+      // it as the image src. buildImageCandidates() returns multiple possible
+      // locations; use the first candidate (most-likely) and let the browser
+      // fall back using its own network behavior if needed.
       const candidates = buildImageCandidates(s.img);
-  let cIndex = 0;
-  // Expose candidate list on the element for easier inspection in DevTools
-  try { img.dataset.candidates = candidates.join(','); } catch (e) {}
-  console.debug && console.debug('carousel: slide', i + 1, 'candidates', candidates);
-  img.src = candidates[cIndex];
-      img.onerror = () => {
-        if (cIndex < candidates.length - 1) {
-          cIndex += 1;
-          img.src = candidates[cIndex];
-        }
-      };
+      img.src = candidates[0];
       img.alt = s.alt || '';
       img.loading = 'lazy';
       img.decoding = 'async';
@@ -215,21 +200,6 @@
 
       slide.appendChild(img);
       slidesWrap.appendChild(slide);
-      // Add simple load/error reporting for diagnostics
-      (function (imgRef, slideIndex, candidateList) {
-        const entry = document.createElement('div');
-        entry.textContent = `Slide ${slideIndex + 1}: trying ${candidateList.join(' | ')}`;
-        entry.style.opacity = '0.9';
-        debug.appendChild(entry);
-        imgRef.addEventListener('load', () => {
-          entry.textContent = `Slide ${slideIndex + 1}: loaded ${imgRef.currentSrc || imgRef.src}`;
-          entry.style.color = 'green';
-        });
-        imgRef.addEventListener('error', () => {
-          entry.textContent = `Slide ${slideIndex + 1}: failed ${imgRef.src}`;
-          entry.style.color = 'crimson';
-        });
-      })(img, i, candidates);
     });
 
     // indicators
