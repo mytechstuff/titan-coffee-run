@@ -73,17 +73,32 @@
   function buildImageCandidates(filename) {
     try {
       // Use relative paths from this module to construct absolute URLs.
-      const baseCandidates = [
-        new URL('../public/assets/img/' + filename, import.meta.url).href,
-        new URL('../assets/img/' + filename, import.meta.url).href,
-        new URL('./public/assets/img/' + filename, import.meta.url).href,
-        new URL('./assets/img/' + filename, import.meta.url).href,
-        // fallback using location origin + path
-        location.origin + '/public/assets/img/' + filename,
-        location.origin + '/assets/img/' + filename
-      ];
+      const candidates = [];
+
+      // If the site is hosted under a repo subpath (GitHub Pages), derive
+      // the repo base from the pathname (first non-empty segment) and try
+      // repo-prefixed absolute URLs first.
+      try {
+        const segs = location.pathname.split('/').filter(Boolean);
+        if (segs.length) {
+          const repoBase = '/' + segs[0];
+          candidates.push(location.origin + repoBase + '/public/assets/img/' + filename);
+          candidates.push(location.origin + repoBase + '/assets/img/' + filename);
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // Module-relative candidates (covers Live Server and relative previews)
+      candidates.push(new URL('../public/assets/img/' + filename, import.meta.url).href);
+      candidates.push(new URL('../assets/img/' + filename, import.meta.url).href);
+      candidates.push(new URL('./public/assets/img/' + filename, import.meta.url).href);
+      candidates.push(new URL('./assets/img/' + filename, import.meta.url).href);
+      // fallback using location origin + path
+      candidates.push(location.origin + '/public/assets/img/' + filename);
+      candidates.push(location.origin + '/assets/img/' + filename);
       // Deduplicate while preserving order
-      return [...new Set(baseCandidates)];
+      return [...new Set(candidates)];
     } catch (e) {
       return ['./public/assets/img/' + filename, './assets/img/' + filename];
     }
