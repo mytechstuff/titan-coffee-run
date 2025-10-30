@@ -142,6 +142,13 @@
     slidesWrap.className = 'slides';
     container.appendChild(slidesWrap);
 
+    // Diagnostic panel: show resolved image URLs and load status for each slide.
+    const debug = document.createElement('div');
+    debug.style.cssText = 'font-size:.85rem;color:var(--muted);margin-top:.5rem;max-width:1100px;margin-left:auto;margin-right:auto;padding:0 1rem';
+    debug.id = 'carousel-debug';
+    // append below the carousel container so maintainers can see load status
+    container.insertAdjacentElement('afterend', debug);
+
     // 1) Create slide elements from the `slides` data.
     //    Each slide receives a `data-index` so we can correlate slides with
     //    indicators without relying on DOM order traversal at runtime.
@@ -184,9 +191,9 @@
       slide.appendChild(img);
       slidesWrap.appendChild(slide);
       // Add simple load/error reporting for diagnostics
-      (function (imgRef, slideIndex) {
+      (function (imgRef, slideIndex, candidateList) {
         const entry = document.createElement('div');
-        entry.textContent = `Slide ${slideIndex + 1}: trying ${imgRef.src}`;
+        entry.textContent = `Slide ${slideIndex + 1}: trying ${candidateList.join(' | ')}`;
         entry.style.opacity = '0.9';
         debug.appendChild(entry);
         imgRef.addEventListener('load', () => {
@@ -197,7 +204,7 @@
           entry.textContent = `Slide ${slideIndex + 1}: failed ${imgRef.src}`;
           entry.style.color = 'crimson';
         });
-      })(img, i);
+      })(img, i, candidates);
     });
 
     // indicators
@@ -242,12 +249,7 @@
     const slideElems = slidesWrap.querySelectorAll('.slide');
     const dotElems = indicators.querySelectorAll('.dot');
 
-  // Diagnostic panel: show resolved image URLs and load status for each slide.
-  const debug = document.createElement('div');
-  debug.style.cssText = 'font-size:.85rem;color:var(--muted);margin-top:.5rem;max-width:1100px;margin-left:auto;margin-right:auto;padding:0 1rem';
-  debug.id = 'carousel-debug';
-  // append below the carousel container so maintainers can see load status
-  container.insertAdjacentElement('afterend', debug);
+  
 
     // --- State management & timing ---
     // `current` holds the index of the visible slide. We keep this as the
