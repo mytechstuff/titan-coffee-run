@@ -75,8 +75,9 @@
     /* taller desktop aspect to show more of the image (reduce aggressive top-cropping) */
     .simple-carousel .slides { position:relative; height:0; padding-bottom:40%; }
     .simple-carousel .slide { position:absolute; inset:0; opacity:0; transition:opacity .6s ease; display:flex; align-items:center; justify-content:center; }
-    /* Keep cover behavior but prefer the top of images so banners don't crop above the subject */
-    .simple-carousel .slide img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
+   /* Show the full image (no cropping). This uses contain so the whole image
+     is visible; letterboxing may appear depending on the image aspect ratio. */
+   .simple-carousel .slide img { width:100%; height:100%; object-fit:contain; object-position:center center; display:block; background:var(--card); }
     .simple-carousel .slide.active { opacity:1; }
     .simple-carousel .indicators { position:absolute; right:12px; bottom:12px; display:flex; gap:8px; }
     .simple-carousel .dot { width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,0.6); border:1px solid rgba(0,0,0,0.08); cursor:pointer; }
