@@ -144,10 +144,20 @@
   function buildCarousel() {
     const container = document.createElement('div');
     container.className = 'simple-carousel';
+    // Accessibility: announceable region and roledescription
+    container.setAttribute('role', 'region');
+    container.setAttribute('aria-roledescription', 'carousel');
+    container.setAttribute('aria-label', 'Homepage hero carousel');
 
     const slidesWrap = document.createElement('div');
     slidesWrap.className = 'slides';
     container.appendChild(slidesWrap);
+
+  // offscreen status for screen readers to announce slide changes
+  const statusEl = document.createElement('div');
+  statusEl.className = 'sr-only';
+  statusEl.setAttribute('aria-live', 'polite');
+  container.appendChild(statusEl);
 
     // Diagnostic panel: show resolved image URLs and load status for each slide.
     const debug = document.createElement('div');
@@ -165,7 +175,10 @@
       slide.className = 'slide' + (i === 0 ? ' active' : '');
       slide.dataset.index = i;
 
-      const img = document.createElement('img');
+  const img = document.createElement('img');
+  // Provide intrinsic dimensions to reduce layout shift
+  img.width = 1200;
+  img.height = 420;
       // Use resolveImagePath to find the image under public/assets/img or
       // public preview's assets folder. Add a runtime fallback so we try both
       // likely locations in case the server maps the site root differently.
@@ -303,6 +316,12 @@
       // add active to new
       slideElems[current].classList.add('active');
       dotElems[current].classList.add('active');
+
+      // Announce slide change for screen readers
+      try {
+        const alt = slides[current] && slides[current].alt ? slides[current].alt : (`Slide ${current+1}`);
+        statusEl.textContent = `Slide ${current+1} of ${total}: ${alt}`;
+      } catch (e) {}
     }
 
     // Convenience wrappers keep call sites readable. They delegate to show()

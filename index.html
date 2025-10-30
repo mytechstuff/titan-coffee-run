@@ -6,8 +6,18 @@
     <title>Titan Coffee Run</title>
     <meta name="description" content="Titan Coffee Run — fresh coffee, fast service." />
     <link rel="stylesheet" href="./src/styles/main.css">
+    <!-- SEO / Social -->
+    <link rel="canonical" href="https://mytechstuff.github.io/titan-coffee-run/">
+    <meta property="og:title" content="Titan Coffee Run">
+    <meta property="og:description" content="Fresh coffee, fast service — order ahead or pick up in 10–15 minutes.">
+    <meta property="og:image" content="https://mytechstuff.github.io/titan-coffee-run/public/assets/img/banner-hero.jpg">
+    <meta property="og:url" content="https://mytechstuff.github.io/titan-coffee-run/">
+    <meta name="twitter:card" content="summary_large_image">
+    <!-- Preload hero for faster LCP -->
+    <link rel="preload" as="image" href="/public/assets/img/banner-hero.jpg">
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <!--
         HEADER
         This is the site header / top navigation. It contains the brand block (logo + name)
@@ -23,8 +33,8 @@
                 <div style="font-size:.85rem;color:var(--muted)">Fresh. Fast. Friendly.</div>
             </div>
         </div>
-        <nav>
-            <a href="#">Home</a>
+        <nav aria-label="Primary navigation">
+            <a href="#" aria-current="page">Home</a>
             <a href="#">Menu</a>
             <a href="#">Locations</a>
             <a href="#">Contact</a>
@@ -39,7 +49,7 @@
         before this hero section. That keeps the carousel visually prominent while
         preserving semantic structure.
     -->
-    <main>
+    <main id="main-content">
         <section class="hero">
             <div>
                 <h1>Titan Coffee Run</h1>
@@ -80,8 +90,8 @@
             -->
             <aside style="padding:1rem">
                 <div style="background:#fff;border-radius:10px;padding:1rem;text-align:center">
-                <!-- Use the JPEG banner so the aside matches the carousel hero. -->
-                <img src="./public/assets/img/banner-hero.jpg" alt="" style="width:100%;height:auto;border-radius:8px;margin-bottom:.75rem">
+                    <!-- Use the JPEG banner so the aside matches the carousel hero. -->
+                    <img src="./public/assets/img/banner-hero.jpg" alt="Titan Coffee Run — study fuel and student deals" width="1200" height="420" style="width:100%;height:auto;border-radius:8px;margin-bottom:.75rem">
                     <div style="font-weight:700">Pickup in 10–15 min</div>
                     <div style="color:var(--muted);margin-top:.5rem;font-size:.95rem">Skip the line with online ordering.</div>
                 </div>
