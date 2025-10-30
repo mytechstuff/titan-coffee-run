@@ -38,11 +38,13 @@
   // resolve the correct path at runtime using resolveImagePath().
   const slides = [
     // NOTE: switched to .jpg so you can drop real JPEG assets into public/assets/img/
-    { alt: 'Freshly brewed coffee', img: 'banner-hero.jpg' },
-    { alt: 'Iced nitro cold brew', img: 'carousel-1.jpg' },
-    { alt: 'Almond latte special', img: 'carousel-2.jpg' },
+    // `objectPosition` is optional per slide and controls how the image is aligned
+    // inside the carousel (useful to avoid cropping important subjects).
+    { alt: 'Freshly brewed coffee', img: 'banner-hero.jpg', objectPosition: 'top center' },
+    { alt: 'Iced nitro cold brew', img: 'carousel-1.jpg', objectPosition: 'center center' },
+    { alt: 'Almond latte special', img: 'carousel-2.jpg', objectPosition: 'top center' },
     // extra slide requested by user — expects public/assets/img/carousel-4.png
-    { alt: 'Student study special', img: 'carousel-4.png' }
+    { alt: 'Student study special', img: 'carousel-4.png', objectPosition: 'center top' }
   ];
 
   // Helper: resolve the correct relative path for images depending on whether
@@ -115,6 +117,8 @@
   img.alt = s.alt || '';
   img.loading = 'lazy';
   img.decoding = 'async';
+  // allow per-slide control of image positioning to prevent unwanted crops
+  if (s.objectPosition) img.style.objectPosition = s.objectPosition;
 
       slide.appendChild(img);
       slidesWrap.appendChild(slide);

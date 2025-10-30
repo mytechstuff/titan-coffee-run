@@ -80,7 +80,28 @@
             -->
             <aside style="padding:1rem">
                 <div style="background:#fff;border-radius:10px;padding:1rem;text-align:center">
-                    <img src="./public/assets/img/banner-hero.jpg" alt="Titan Coffee Run banner" style="width:100%;height:auto;border-radius:8px;margin-bottom:.75rem">
+                    <img id="aside-banner" src="" alt="Titan Coffee Run banner" style="width:100%;height:auto;border-radius:8px;margin-bottom:.75rem">
+                    <script>
+                        // Resolve banner image path at runtime so this same HTML works
+                        // when served from the repo root or from the `/public/` demo page.
+                        (function(){
+                            const img = document.getElementById('aside-banner');
+                            if(!img) return;
+                            const filename = 'banner-hero.jpg';
+                            // Try the path used when viewing root index.html first.
+                            const tryRoot = './public/assets/img/' + filename;
+                            const tryPublic = './assets/img/' + filename;
+                            // Load root first; on error fall back to public path.
+                            img.onload = function(){ /* good */ };
+                            img.onerror = function(){
+                                // If the first attempt failed, try the alternate path.
+                                if(img.src && img.src.indexOf(tryRoot) !== -1){
+                                    img.src = tryPublic;
+                                }
+                            };
+                            img.src = tryRoot;
+                        })();
+                    </script>
                     <div style="font-weight:700">Pickup in 10–15 min</div>
                     <div style="color:var(--muted);margin-top:.5rem;font-size:.95rem">Skip the line with online ordering.</div>
                 </div>
