@@ -1,0 +1,133 @@
+/* Modern, neutral form styles for apply.html
+   - placed in src/styles/apply.css for easy tweaking
+   - uses a responsive single-column layout with a small grid for name/location
+*/
+:root{
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --accent: #4f46e5; /* indigo-600 */
+  --accent-700: #4338ca;
+  --danger: #dc2626;
+  --radius: 10px;
+  --max-width: 780px;
+  --container-padding: 1.25rem;
+}
+
+body{
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  line-height:1.4;
+  color:#111827;
+  background:var(--bg);
+}
+
+.container{
+  max-width:var(--max-width);
+  margin:1.5rem auto;
+  padding:var(--container-padding);
+}
+
+/* Two-column layout for the form + image/help area */
+.form-layout{
+  display:grid;
+  grid-template-columns: 1fr 320px;
+  gap:1rem;
+  align-items:start;
+}
+
+@media (max-width:900px){
+  .form-layout{grid-template-columns:1fr}
+}
+
+.credit-form{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:1.25rem 1.5rem;
+  box-shadow:0 6px 18px rgba(15,23,42,0.06);
+}
+
+.credit-form fieldset{
+  border:0;
+  margin:0;
+  padding:0;
+}
+
+.credit-form legend{
+  font-weight:600;
+  margin-bottom:0.5rem;
+}
+
+.form-row{
+  display:flex;
+  flex-direction:column;
+  margin-bottom:0.75rem;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:0.75rem;
+  margin-bottom:0.75rem;
+}
+
+@media (max-width:720px){
+  .form-grid{grid-template-columns:1fr;}
+}
+
+label{font-size:.95rem;margin-bottom:.25rem}
+
+input[type="text"],
+input[type="email"],
+input[type="number"],
+textarea{
+  padding:.6rem .75rem;
+  border:1px solid #e6e9ef;
+  border-radius:8px;
+  font-size:1rem;
+  outline: none;
+  background: #fff;
+}
+
+input:focus, textarea:focus{
+  box-shadow:0 0 0 4px rgba(79,70,229,0.08);
+  border-color:var(--accent-700);
+}
+
+.field-help{font-size:.85rem;color:var(--muted);margin-top:.25rem}
+
+.checkbox-row{display:flex;align-items:center;gap:.5rem;margin:1rem 0}
+
+.side-help{display:flex;flex-direction:column;gap:.75rem}
+.promo-figure{margin:0}
+.promo-figure img{display:block;width:100%;height:auto;border-radius:8px;object-fit:cover}
+.help-card{background:var(--card);padding:1rem;border-radius:8px;box-shadow:0 6px 18px rgba(15,23,42,0.03)}
+.visually-hidden{position:absolute;height:1px;width:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap}
+
+.btn{
+  padding:.6rem 1rem;
+  border-radius:8px;
+  border:1px solid transparent;
+  cursor:pointer;
+  font-weight:600;
+}
+
+.btn.primary{
+  background:var(--accent);
+  color:#fff;
+}
+
+.btn:focus{box-shadow:0 0 0 4px rgba(79,70,229,0.12)}
+
+.form-actions{display:flex;gap:.75rem;margin-top:1rem}
+
+.validation-summary{background:#fff7f7;border:1px solid rgba(220,38,38,0.08);padding:.75rem;border-radius:8px;margin-bottom:.75rem;color:var(--danger)}
+
+.required{color:var(--danger);margin-left:.1rem}
+
+/* smaller visual helpers */
+.lede{color:var(--muted);margin-bottom:1rem}
+
+/* simple responsive tweaks */
+@media (max-width:480px){
+  .form-actions{flex-direction:column}
+}

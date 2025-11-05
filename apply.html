@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Apply for Credit — Titan Coffee Run</title>
+  <link rel="stylesheet" href="./src/styles/main.css" />
+  <link rel="stylesheet" href="./src/styles/apply.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header>
+    <div class="brand">
+      <div class="logo">T</div>
+      <div>
+        <div style="font-weight:800">Titan Coffee Run</div>
+        <div style="font-size:.85rem;color:var(--muted)">Fresh. Fast. Friendly.</div>
+      </div>
+    </div>
+    <nav aria-label="Primary navigation">
+      <a href="index.html">Home</a>
+      <a href="apply.html" aria-current="page">Apply for Credit</a>
+    </nav>
+  </header>
+
+  <main id="main-content" class="container">
+    <h1>Credit Application</h1>
+    <p class="lede">Apply for a Titan Coffee Run credit line to pay for business orders.</p>
+
+    <div class="form-layout">
+      <section aria-labelledby="form-heading">
+        <h2 id="form-heading">Application form</h2>
+
+        <div id="validation-summary" aria-live="polite" class="validation-summary" hidden></div>
+          <div id="decision-result" aria-live="polite" class="decision-result" hidden></div>
+
+        <form id="credit-application-form" class="credit-form" method="post" action="/api/credit/apply" novalidate>
+        <fieldset>
+          <legend>Applicant information</legend>
+
+          <div class="form-row">
+            <label for="email">Email address <span class="required" aria-hidden="true">*</span></label>
+            <input id="email" name="email" type="email" placeholder="you@company.com" required aria-describedby="emailHelp" />
+            <div id="emailHelp" class="field-help">We'll use this to contact you about your application.</div>
+          </div>
+
+          <div class="form-row">
+            <label for="emailConfirm">Re-enter email address <span class="required" aria-hidden="true">*</span></label>
+            <input id="emailConfirm" name="emailConfirm" type="email" placeholder="you@company.com" required />
+          </div>
+
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="firstName">First name</label>
+              <input id="firstName" name="firstName" type="text" placeholder="Jane" />
+            </div>
+            <div class="form-row">
+              <label for="lastName">Last name</label>
+              <input id="lastName" name="lastName" type="text" placeholder="Doe" />
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="city">City</label>
+              <input id="city" name="city" type="text" placeholder="Seattle" />
+            </div>
+            <div class="form-row">
+              <label for="state">State</label>
+              <input id="state" name="state" type="text" placeholder="WA" />
+            </div>
+            <div class="form-row">
+              <label for="zip">ZIP</label>
+              <input id="zip" name="zip" type="text" inputmode="numeric" placeholder="98101" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="grossIncome">Gross income (USD)</label>
+            <input id="grossIncome" name="grossIncome" type="number" min="0" step="1" placeholder="120000" />
+          </div>
+
+          <div class="form-row">
+            <label for="ssnLast4">Last 4 of SSN <span class="required" aria-hidden="true">*</span></label>
+            <input id="ssnLast4" name="ssnLast4" type="text" inputmode="numeric" pattern="\d{4}" maxlength="4" placeholder="1234" required aria-describedby="ssnHelp" />
+            <div id="ssnHelp" class="field-help">Collected for application purposes only; will be stored securely.</div>
+          </div>
+
+          <div class="form-row checkbox-row">
+            <input id="consent" name="consent" type="checkbox" required />
+            <label for="consent">I consent to use my information for the credit application process <span class="required" aria-hidden="true">*</span></label>
+          </div>
+        </fieldset>
+
+        <div class="form-actions">
+          <button type="submit" id="applyBtn" class="btn primary">Apply</button>
+          <button type="reset" id="resetBtn" class="btn">Reset</button>
+        </div>
+      </form>
+      </section>
+
+      <aside aria-labelledby="help-heading" class="side-help">
+        <figure class="promo-figure">
+          <img src="./public/assets/img/quadstudy.jpg" alt="Customers enjoying Titan Coffee Run" width="600" height="400">
+          <figcaption class="visually-hidden">Customers at Titan Coffee Run</figcaption>
+        </figure>
+
+        <div class="help-card">
+          <h3 id="help-heading">Need help?</h3>
+          <p>Questions about the application? Contact <a href="mailto:sales@titancoffeerun.example">sales@titancoffeerun.example</a>.</p>
+          <p style="margin-top:1rem"><a href="index.html">Back to home</a></p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; Titan Coffee Run</p>
+  </footer>
+
+  <script type="module" src="assets/js/apply-form.js"></script>
+</body>
+</html>
