@@ -1,13 +1,7 @@
-// Correct relative import: this file lives at /assets/js/apply-form.js and
-// the qualify module is at /src/qualify.js, so we need to go up two levels.
+// Client-side form handler for apply.html
 import { validateAllFields, validateAndQualify, validateField } from '../../src/qualify.js';
 
-// Debug helper to confirm the module loaded in the browser console.
 console.log('apply-form module loaded');
-
-// Client-side form handler for apply.html
-// - Prevents default submit, runs validation, shows inline errors and a summary
-// - Adds click listener to #applyButton (falls back to #applyBtn)
 
 const FIELD_ERROR_CLASS = 'field-error-message';
 
@@ -25,6 +19,30 @@ function clearFieldErrors(form) {
   form.querySelectorAll('[aria-invalid="true"]').forEach(el => el.removeAttribute('aria-invalid'));
 }
 
+function getLiveRegion() {
+  let lr = document.getElementById('form-live-region');
+  if (!lr) {
+    lr = document.createElement('div');
+    lr.id = 'form-live-region';
+    lr.className = 'visually-hidden';
+    lr.setAttribute('role', 'status');
+    lr.setAttribute('aria-live', 'polite');
+    lr.setAttribute('aria-atomic', 'true');
+    document.body.appendChild(lr);
+  }
+  return lr;
+}
+
+function announce(message) {
+  try {
+    const lr = getLiveRegion();
+    lr.textContent = '';
+    setTimeout(() => { lr.textContent = message; }, 50);
+  } catch (e) {
+    // ignore
+  }
+}
+
 function showValidationSummary(summaryEl, errors) {
   if (!summaryEl) return;
   if (!errors || !errors.length) {
@@ -32,18 +50,58 @@ function showValidationSummary(summaryEl, errors) {
     summaryEl.innerHTML = '';
     return;
   }
+
   summaryEl.hidden = false;
+  const heading = document.createElement('h4');
+  heading.textContent = `Please correct the following ${errors.length === 1 ? 'error' : 'errors'}:`;
+  heading.style.margin = '0 0 0.5rem 0';
+
   const ul = document.createElement('ul');
   ul.style.margin = '0';
   ul.style.paddingLeft = '1.25rem';
-  errors.forEach(err => {
+
+  errors.forEach((err) => {
     const li = document.createElement('li');
-    li.textContent = err.message;
+    let labelText = err.field;
+    try {
+      const lab = document.querySelector(`label[for="${err.field}"]`);
+      if (lab && lab.textContent) labelText = lab.textContent.replace(/\*/g, '').trim();
+    } catch (e) {}
+
+    // Use a non-tabbable button so tab order remains on the form fields.
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'validation-summary-link';
+    btn.tabIndex = -1; // not in tab order per user's preference
+    btn.style.background = 'transparent';
+    btn.style.border = 'none';
+    btn.style.padding = '0';
+    btn.style.color = 'inherit';
+    btn.style.textDecoration = 'underline';
+    btn.style.cursor = 'pointer';
+    btn.textContent = `${labelText}: ${err.message}`;
+    btn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      const field = document.getElementById(err.field);
+      if (field) {
+        field.focus();
+        try { if (field.select) field.select(); } catch (e) {}
+      }
+    });
+
+    li.appendChild(btn);
     ul.appendChild(li);
   });
+
   summaryEl.innerHTML = '';
+  summaryEl.setAttribute('role', 'status');
+  summaryEl.setAttribute('aria-live', 'polite');
+  summaryEl.setAttribute('aria-atomic', 'true');
+  summaryEl.appendChild(heading);
   summaryEl.appendChild(ul);
-  summaryEl.focus && summaryEl.focus();
+
+  // Announce the first validation message for screen readers
+  if (errors && errors.length) announce(errors[0].message);
 }
 
 function showInlineErrors(form, errors) {
@@ -51,11 +109,11 @@ function showInlineErrors(form, errors) {
     const field = form.querySelector(`#${err.field}`);
     if (field) {
       field.setAttribute('aria-invalid', 'true');
-      // place message after the field
       const errNode = createErrorNode(err.message);
-      // If field is inside a form-row, append there
       const parentRow = field.closest('.form-row') || field.parentNode;
       parentRow.appendChild(errNode);
+      // link error to the field for assistive tech
+      try { errNode.id = `${err.field}-error`; field.setAttribute('aria-describedby', `${err.field}-error`); } catch (e) {}
     }
   });
 }
@@ -63,26 +121,8 @@ function showInlineErrors(form, errors) {
 function collectFormData(form) {
   const fd = new FormData(form);
   const data = Object.fromEntries(fd.entries());
-  // normalize checkbox
   data.consent = !!form.querySelector('#consent') && form.querySelector('#consent').checked;
-  // keep grossIncome as-is (string) — validation will coerce
-  return data;
-}
-
-async function handleValidationAndMaybeSubmit(form, summaryEl, event) {
-  if (event && event.preventDefault) event.preventDefault();
-  clearFieldErrors(form);
-  const data = collectFormData(form);
-
-  // run validation (using qualify.js helpers)
-    // validateAllFields checks all required fields and returns array of errors
-    const errors = validateAllFields(data);
-  if (errors.length) {
-    showInlineErrors(form, errors);
-    showValidationSummary(summaryEl, errors);
-    // focus first invalid field
-    const first = form.querySelector('[aria-invalid="true"]');
-    if (first && typeof first.focus === 'function') first.focus();
+ 
     return false;
   }
 
@@ -99,21 +139,17 @@ async function handleValidationAndMaybeSubmit(form, summaryEl, event) {
       const p = document.createElement('p');
       p.textContent = 'Validation errors present.';
       decisionEl.appendChild(p);
+      announce('Validation errors present. Please review the highlighted fields.');
     } else if (decision.decision === 'approved') {
       const p = document.createElement('p');
       p.innerHTML = `<strong>Congratulations — approved</strong>. Your provisional credit line is <strong>$${decision.creditAmount.toLocaleString()}</strong>.`;
       decisionEl.appendChild(p);
-      // Offer an optional submit button to send to server if a backend exists
-      const submitBtn = document.createElement('button');
-      submitBtn.type = 'button';
-      submitBtn.className = 'btn primary';
-      submitBtn.textContent = 'Confirm & Submit Application';
-      submitBtn.addEventListener('click', () => {
-        // Remove this client-side interception and submit normally
-        form.removeEventListener('submit', handleValidationAndMaybeSubmit);
-        form.submit();
-      });
-      decisionEl.appendChild(submitBtn);
+      // Show a visual success banner for better UX
+      showSuccessBanner(`Approved — provisional credit: $${decision.creditAmount.toLocaleString()}`);
+      // Emphasize in console with styling
+      console.log('%cCredit approved: $' + decision.creditAmount.toLocaleString(), 'background: #10b981; color: white; padding:8px 10px; font-size:14px; border-radius:4px');
+      // Announce the approval to screen readers
+      announce(`Application approved. Provisional credit: $${decision.creditAmount.toLocaleString()}`);
     } else if (decision.decision === 'declined') {
       const p = document.createElement('p');
       p.innerHTML = `<strong>We're sorry — you do not qualify at this time.</strong> Reason: ${decision.reason || 'Not eligible'}.`;
@@ -122,11 +158,9 @@ async function handleValidationAndMaybeSubmit(form, summaryEl, event) {
       info.className = 'field-help';
       info.textContent = 'If you believe this is an error, contact sales@titancoffeerun.example to discuss next steps.';
       decisionEl.appendChild(info);
+      announce(`Application declined. Reason: ${decision.reason || 'Not eligible'}.`);
     }
   }
-
-  return true;
-}
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
@@ -166,16 +200,18 @@ document.addEventListener('DOMContentLoaded', () => {
     showValidationSummary(summaryEl, allErrors);
   }
 
-  // Attach real-time validation listeners
-  const instantFields = ['email','emailConfirm','firstName','lastName','city','state','zip','grossIncome','ssnLast4','consent'];
-  instantFields.forEach((field) => {
+  // Attach validation-on-leave listeners: validate when the user leaves the field (blur)
+  // This avoids noisy keystroke-by-keystroke errors and improves UX.
+  const validateOnLeaveFields = ['email','emailConfirm','firstName','lastName','city','state','zip','grossIncome','ssnLast4','consent'];
+  validateOnLeaveFields.forEach((field) => {
     const el = form.querySelector(`#${field}`);
     if (!el) return;
     const handler = () => validateOneField(field);
     if (el.type === 'checkbox' || el.tagName === 'SELECT') {
+      // checkboxes and selects validate on change
       el.addEventListener('change', handler);
     } else {
-      el.addEventListener('input', debounce(handler, 300));
+      // only validate on blur (when user leaves the field)
       el.addEventListener('blur', handler);
     }
   });

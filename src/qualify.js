@@ -34,6 +34,8 @@
 const DEFAULTS = {
   // Minimum gross income to be considered for any credit
   minIncomeForConsideration: 10000,
+  // Income at or above this value will trigger an automatic approval (configurable)
+  minApprovalIncome: 20000,
   // Maximum credit as a fraction of gross income (e.g., 0.1 -> 10% of income)
   incomeCreditFactor: 0.1,
   // Absolute cap on credit (USD)
@@ -199,9 +201,14 @@ export function qualifyApplicant(data = {}, options = {}) {
 
   const income = Number(data.grossIncome) || 0;
 
+  // If income is below the minimum for consideration, decline right away
   if (income < cfg.minIncomeForConsideration) {
     return { decision: 'declined', creditAmount: null, reason: 'income_below_minimum' };
   }
+
+  // Explicit auto-approve rule: if income meets or exceeds minApprovalIncome,
+  // grant approval and compute credit using the same factor/cap logic below.
+  const shouldAutoApprove = income >= cfg.minApprovalIncome;
 
   // calculate base credit as fraction of income
   let credit = Math.floor(income * cfg.incomeCreditFactor);
@@ -220,6 +227,12 @@ export function qualifyApplicant(data = {}, options = {}) {
   // final check: if credit is zero, decline
   if (credit <= 0) {
     return { decision: 'declined', creditAmount: null, reason: 'computed_credit_zero' };
+  }
+
+  // If auto-approve applies, return approved. Otherwise follow the same
+  // approval path (we already computed credit above and applied caps/requests).
+  if (shouldAutoApprove) {
+    return { decision: 'approved', creditAmount: credit, reason: 'auto_approved_by_income' };
   }
 
   return { decision: 'approved', creditAmount: credit };
