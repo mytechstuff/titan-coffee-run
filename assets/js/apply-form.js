@@ -1,4 +1,9 @@
-import { validateFields, validateAndQualify } from '../src/qualify.js';
+// Correct relative import: this file lives at /assets/js/apply-form.js and
+// the qualify module is at /src/qualify.js, so we need to go up two levels.
+import { validateAllFields, validateAndQualify } from '../../src/qualify.js';
+
+// Debug helper to confirm the module loaded in the browser console.
+console.log('apply-form module loaded');
 
 // Client-side form handler for apply.html
 // - Prevents default submit, runs validation, shows inline errors and a summary
@@ -70,7 +75,8 @@ async function handleValidationAndMaybeSubmit(form, summaryEl, event) {
   const data = collectFormData(form);
 
   // run validation (using qualify.js helpers)
-  const errors = validateFields(data);
+    // validateAllFields checks all required fields and returns array of errors
+    const errors = validateAllFields(data);
   if (errors.length) {
     showInlineErrors(form, errors);
     showValidationSummary(summaryEl, errors);

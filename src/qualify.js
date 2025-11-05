@@ -116,6 +116,61 @@ export function validateFields(data = {}) {
   return errors;
 }
 
+/**
+ * validateAllFields
+ * Loop through all expected form fields and validate each according to rules.
+ * Returns an array of error objects: { field, message }
+ */
+export function validateAllFields(data = {}) {
+  const errors = [];
+
+  // Email checks
+  if (!isEmail(data.email)) {
+    errors.push({ field: 'email', message: 'Enter a valid email address.' });
+  }
+  if (!matchEmails(data.email, data.emailConfirm)) {
+    errors.push({ field: 'emailConfirm', message: 'Email addresses do not match.' });
+  }
+
+  // First and last name required
+  if (!data.firstName || String(data.firstName).trim() === '') {
+    errors.push({ field: 'firstName', message: 'First name is required.' });
+  }
+  if (!data.lastName || String(data.lastName).trim() === '') {
+    errors.push({ field: 'lastName', message: 'Last name is required.' });
+  }
+
+  // City and state
+  if (!data.city || String(data.city).trim() === '') {
+    errors.push({ field: 'city', message: 'City is required.' });
+  }
+  if (!data.state || !/^[A-Za-z]{2}$/.test(String(data.state).trim())) {
+    errors.push({ field: 'state', message: 'Enter a valid 2-letter state code.' });
+  }
+
+  // ZIP must be 5 digits
+  if (!/^\d{5}$/.test(String(data.zip || '').trim())) {
+    errors.push({ field: 'zip', message: 'ZIP code must be 5 digits.' });
+  }
+
+  // Gross income must be a positive number
+  if (data.grossIncome === undefined || data.grossIncome === '' || !isNonNegativeNumber(data.grossIncome) || Number(data.grossIncome) <= 0) {
+    errors.push({ field: 'grossIncome', message: 'Gross income must be a positive number.' });
+  }
+
+  // SSN last 4
+  if (!isSSNLast4(data.ssnLast4)) {
+    errors.push({ field: 'ssnLast4', message: 'Enter the last 4 digits of your SSN.' });
+  }
+
+  // Consent checkbox must be true
+  if (!data.consent) {
+    errors.push({ field: 'consent', message: 'You must consent to use information for credit application.' });
+  }
+
+  return errors;
+}
+
 // ------------------- Qualification logic -------------------
 
 /**
