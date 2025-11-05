@@ -1,6 +1,6 @@
 // Correct relative import: this file lives at /assets/js/apply-form.js and
 // the qualify module is at /src/qualify.js, so we need to go up two levels.
-import { validateAllFields, validateAndQualify } from '../../src/qualify.js';
+import { validateAllFields, validateAndQualify, validateField } from '../../src/qualify.js';
 
 // Debug helper to confirm the module loaded in the browser console.
 console.log('apply-form module loaded');
@@ -133,6 +133,52 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('credit-application-form');
   const summaryEl = document.getElementById('validation-summary');
   if (!form) return;
+
+  // Debounce helper to avoid validating on every keystroke
+  function debounce(fn, wait = 250) {
+    let t = null;
+    return (...args) => {
+      if (t) clearTimeout(t);
+      t = setTimeout(() => fn(...args), wait);
+    };
+  }
+
+  // Validate a single field and show/hide inline message
+  function validateOneField(fieldName) {
+    const fd = new FormData(form);
+    const data = Object.fromEntries(fd.entries());
+    data.consent = !!form.querySelector('#consent') && form.querySelector('#consent').checked;
+    const err = validateField(fieldName, data);
+
+    const fieldEl = form.querySelector(`#${fieldName}`);
+    if (!fieldEl) return;
+    const parentRow = fieldEl.closest('.form-row') || fieldEl.parentNode;
+    // remove existing inline errors in this parent
+    parentRow.querySelectorAll('.' + FIELD_ERROR_CLASS).forEach(n => n.remove());
+    fieldEl.removeAttribute('aria-invalid');
+    if (err) {
+      fieldEl.setAttribute('aria-invalid', 'true');
+      parentRow.appendChild(createErrorNode(err.message));
+    }
+
+    // update global summary
+    const allErrors = validateAllFields(data);
+    showValidationSummary(summaryEl, allErrors);
+  }
+
+  // Attach real-time validation listeners
+  const instantFields = ['email','emailConfirm','firstName','lastName','city','state','zip','grossIncome','ssnLast4','consent'];
+  instantFields.forEach((field) => {
+    const el = form.querySelector(`#${field}`);
+    if (!el) return;
+    const handler = () => validateOneField(field);
+    if (el.type === 'checkbox' || el.tagName === 'SELECT') {
+      el.addEventListener('change', handler);
+    } else {
+      el.addEventListener('input', debounce(handler, 300));
+      el.addEventListener('blur', handler);
+    }
+  });
 
   // Attach submit handler to prevent default and validate
   form.addEventListener('submit', (e) => handleValidationAndMaybeSubmit(form, summaryEl, e));

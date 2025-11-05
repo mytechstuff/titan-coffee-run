@@ -71,6 +71,22 @@ export function isNonNegativeNumber(value) {
   return Number.isFinite(n) && n >= 0;
 }
 
+// ------------------- State lookup -------------------
+// US state 2-letter codes (including DC)
+const US_STATES = new Set([
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA',
+  'HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
+  'MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
+  'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY',
+  'DC'
+]);
+
+export function isValidState(value) {
+  if (!value) return false;
+  return US_STATES.has(String(value).trim().toUpperCase());
+}
+
 // ------------------- Field-level validation -------------------
 
 /**
@@ -144,7 +160,7 @@ export function validateAllFields(data = {}) {
   if (!data.city || String(data.city).trim() === '') {
     errors.push({ field: 'city', message: 'City is required.' });
   }
-  if (!data.state || !/^[A-Za-z]{2}$/.test(String(data.state).trim())) {
+  if (!isValidState(data.state)) {
     errors.push({ field: 'state', message: 'Enter a valid 2-letter state code.' });
   }
 
@@ -221,6 +237,49 @@ export function validateAndQualify(data = {}, options = {}) {
   if (errors.length) return { errors };
   const decision = qualifyApplicant(data, options);
   return { errors: [], ...decision };
+}
+
+// ------------------- Per-field validation helper -------------------
+/**
+ * validateField(field, data)
+ * Validate a single field using the provided data object (so cross-field checks work).
+ * Returns null when valid, or an error object { field, message } when invalid.
+ */
+export function validateField(field, data = {}) {
+  switch (field) {
+    case 'email':
+      if (!isEmail(data.email)) return { field, message: 'Enter a valid email address.' };
+      return null;
+    case 'emailConfirm':
+      if (!matchEmails(data.email, data.emailConfirm)) return { field, message: 'Email addresses do not match.' };
+      return null;
+    case 'firstName':
+      if (!data.firstName || String(data.firstName).trim() === '') return { field, message: 'First name is required.' };
+      return null;
+    case 'lastName':
+      if (!data.lastName || String(data.lastName).trim() === '') return { field, message: 'Last name is required.' };
+      return null;
+    case 'city':
+      if (!data.city || String(data.city).trim() === '') return { field, message: 'City is required.' };
+      return null;
+    case 'state':
+      if (!isValidState(data.state)) return { field, message: 'Enter a valid 2-letter state code.' };
+      return null;
+    case 'zip':
+      if (!/^\d{5}$/.test(String(data.zip || '').trim())) return { field, message: 'ZIP code must be 5 digits.' };
+      return null;
+    case 'grossIncome':
+      if (data.grossIncome === undefined || data.grossIncome === '' || !isNonNegativeNumber(data.grossIncome) || Number(data.grossIncome) <= 0) return { field, message: 'Gross income must be a positive number.' };
+      return null;
+    case 'ssnLast4':
+      if (!isSSNLast4(data.ssnLast4)) return { field, message: 'Enter the last 4 digits of your SSN.' };
+      return null;
+    case 'consent':
+      if (!data.consent) return { field, message: 'You must consent to use information for credit application.' };
+      return null;
+    default:
+      return null;
+  }
 }
 
 // ------------------- Notes on local vs global variables -------------------
