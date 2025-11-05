@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
 
-import { validateFields, qualifyApplicant } from '../src/qualify.js';
+import { validateAllFields, qualifyApplicant } from '../src/qualify.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,9 +58,10 @@ app.post('/api/credit/apply', async (req, res) => {
       data.consent = data.consent === 'on' || data.consent === 'true';
     }
 
-    // Run server-side validation
-    const errors = validateFields(data);
+    // Run server-side validation (use the same comprehensive validator as the client)
+    const errors = validateAllFields(data);
     if (errors.length) {
+      // Return 400 with the array of { field, message }
       return res.status(400).json({ errors });
     }
 
