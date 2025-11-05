@@ -2,9 +2,11 @@
   "name": "titan-coffee-run",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "Front-end project scaffold for Titan Coffee Run",
   "scripts": {
-    "start": "node ./src/index.js",
+  "start": "node ./src/index.js",
+  "start:server": "node ./server/index.js",
     "test": "echo \"No tests defined\" && exit 0"
   },
   "license": "MIT"
