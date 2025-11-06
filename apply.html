@@ -34,7 +34,8 @@
         <div id="validation-summary" aria-live="polite" class="validation-summary" hidden></div>
           <div id="decision-result" aria-live="polite" class="decision-result" hidden></div>
 
-        <form id="credit-application-form" class="credit-form" method="post" action="/api/credit/apply" novalidate>
+  <!-- Client-only flow: no server POST by default. JavaScript intercepts submit events. -->
+  <form id="credit-application-form" class="credit-form" novalidate>
         <fieldset>
           <legend>Applicant information</legend>
 
@@ -97,6 +98,29 @@
           <button type="reset" id="resetBtn" class="btn">Reset</button>
         </div>
       </form>
+      
+        <!-- Errors report / export area (client-only) -->
+        <section id="errors-report" aria-labelledby="errors-heading" style="margin-top:1.5rem">
+          <h3 id="errors-heading">Validation failures</h3>
+          <p class="field-help">When validation finds problems, they will be listed below. You can print or save the list.</p>
+          <div style="margin-bottom:.5rem">
+            <button id="exportErrorsBtn" class="btn">Save as CSV</button>
+            <button id="printErrorsBtn" class="btn">Print</button>
+            <button id="clearErrorsBtn" class="btn">Clear</button>
+          </div>
+          <div style="overflow:auto">
+            <table id="errors-table" class="errors-table" style="width:100%;border-collapse:collapse;border:1px solid #ddd">
+              <thead>
+                <tr>
+                  <th style="text-align:left;padding:.5rem;border-bottom:1px solid #ddd">Field</th>
+                  <th style="text-align:left;padding:.5rem;border-bottom:1px solid #ddd">Message</th>
+                  <th style="text-align:left;padding:.5rem;border-bottom:1px solid #ddd">When</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
       </section>
 
       <aside aria-labelledby="help-heading" class="side-help">

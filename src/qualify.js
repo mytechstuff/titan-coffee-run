@@ -33,7 +33,7 @@
 // Default configuration for qualification rules. Keep simple and configurable.
 const DEFAULTS = {
   // Minimum gross income to be considered for any credit
-  minIncomeForConsideration: 10000,
+  minIncomeForConsideration: 16000,
   // Income at or above this value will trigger an automatic approval (configurable)
   minApprovalIncome: 20000,
   // Maximum credit as a fraction of gross income (e.g., 0.1 -> 10% of income)

@@ -1,239 +1,409 @@
-// Client-side form handler for apply.html
-import { validateAllFields, validateAndQualify, validateField } from '../../src/qualify.js';
-
-console.log('apply-form module loaded');
+// Module imports: use the canonical validation/qualification helpers from src/qualify.js
+// This centralizes the business rules so server and client can share the same logic.
+import { validateAllFields, validateField, qualifyApplicant } from '../../src/qualify.js';
 
 const FIELD_ERROR_CLASS = 'field-error-message';
+// Ordered list of fields to display in validation results table
+const FIELD_ORDER = ['email','emailConfirm','firstName','lastName','city','state','zip','grossIncome','ssnLast4','consent','requestedAmount'];
+const FIELD_LABELS = {
+  email: 'Email',
+  emailConfirm: 'Confirm email',
+  firstName: 'First name',
+  lastName: 'Last name',
+  city: 'City',
+  state: 'State',
+  zip: 'ZIP',
+  grossIncome: 'Gross income (USD)',
+  ssnLast4: 'Last 4 of SSN',
+  consent: 'Consent to process',
+  requestedAmount: 'Requested amount'
+};
+// ---------- UI helpers (DOM updates) ----------
 
-function createErrorNode(msg) {
-  const d = document.createElement('div');
-  d.className = FIELD_ERROR_CLASS;
-  d.style.color = 'var(--danger)';
-  d.style.fontSize = '0.9rem';
-  d.textContent = msg;
-  return d;
+/** Create a DOM node to show an inline field error. */
+function createErrorNode(message) {
+  const node = document.createElement('div');
+  node.className = FIELD_ERROR_CLASS;
+  node.style.color = 'var(--danger)';
+  node.style.fontSize = '0.9rem';
+  node.textContent = message;
+  return node;
 }
 
+/** Remove inline error nodes and aria-invalid attributes inside the form. */
 function clearFieldErrors(form) {
-  form.querySelectorAll(`.${FIELD_ERROR_CLASS}`).forEach(n => n.remove());
-  form.querySelectorAll('[aria-invalid="true"]').forEach(el => el.removeAttribute('aria-invalid'));
+  form.querySelectorAll(`.${FIELD_ERROR_CLASS}`).forEach((n) => n.remove());
+  form.querySelectorAll('[aria-invalid="true"]').forEach((el) => el.removeAttribute('aria-invalid'));
 }
 
-function getLiveRegion() {
-  let lr = document.getElementById('form-live-region');
-  if (!lr) {
-    lr = document.createElement('div');
-    lr.id = 'form-live-region';
-    lr.className = 'visually-hidden';
-    lr.setAttribute('role', 'status');
-    lr.setAttribute('aria-live', 'polite');
-    lr.setAttribute('aria-atomic', 'true');
-    document.body.appendChild(lr);
-  }
-  return lr;
-}
-
-function announce(message) {
-  try {
-    const lr = getLiveRegion();
-    lr.textContent = '';
-    setTimeout(() => { lr.textContent = message; }, 50);
-  } catch (e) {
-    // ignore
-  }
-}
-
-function showValidationSummary(summaryEl, errors) {
-  if (!summaryEl) return;
-  if (!errors || !errors.length) {
-    summaryEl.hidden = true;
-    summaryEl.innerHTML = '';
-    return;
-  }
-
-  summaryEl.hidden = false;
-  const heading = document.createElement('h4');
-  heading.textContent = `Please correct the following ${errors.length === 1 ? 'error' : 'errors'}:`;
-  heading.style.margin = '0 0 0.5rem 0';
-
-  const ul = document.createElement('ul');
-  ul.style.margin = '0';
-  ul.style.paddingLeft = '1.25rem';
-
-  errors.forEach((err) => {
-    const li = document.createElement('li');
-    let labelText = err.field;
-    try {
-      const lab = document.querySelector(`label[for="${err.field}"]`);
-      if (lab && lab.textContent) labelText = lab.textContent.replace(/\*/g, '').trim();
-    } catch (e) {}
-
-    // Use a non-tabbable button so tab order remains on the form fields.
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'validation-summary-link';
-    btn.tabIndex = -1; // not in tab order per user's preference
-    btn.style.background = 'transparent';
-    btn.style.border = 'none';
-    btn.style.padding = '0';
-    btn.style.color = 'inherit';
-    btn.style.textDecoration = 'underline';
-    btn.style.cursor = 'pointer';
-    btn.textContent = `${labelText}: ${err.message}`;
-    btn.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      const field = document.getElementById(err.field);
-      if (field) {
-        field.focus();
-        try { if (field.select) field.select(); } catch (e) {}
-      }
-    });
-
-    li.appendChild(btn);
-    ul.appendChild(li);
-  });
-
-  summaryEl.innerHTML = '';
-  summaryEl.setAttribute('role', 'status');
-  summaryEl.setAttribute('aria-live', 'polite');
-  summaryEl.setAttribute('aria-atomic', 'true');
-  summaryEl.appendChild(heading);
-  summaryEl.appendChild(ul);
-
-  // Announce the first validation message for screen readers
-  if (errors && errors.length) announce(errors[0].message);
-}
-
-function showInlineErrors(form, errors) {
-  errors.forEach(err => {
-    const field = form.querySelector(`#${err.field}`);
-    if (field) {
-      field.setAttribute('aria-invalid', 'true');
-      const errNode = createErrorNode(err.message);
-      const parentRow = field.closest('.form-row') || field.parentNode;
-      parentRow.appendChild(errNode);
-      // link error to the field for assistive tech
-      try { errNode.id = `${err.field}-error`; field.setAttribute('aria-describedby', `${err.field}-error`); } catch (e) {}
-    }
-  });
-}
-
+/** Collect form input values into a plain object. */
 function collectFormData(form) {
   const fd = new FormData(form);
   const data = Object.fromEntries(fd.entries());
   data.consent = !!form.querySelector('#consent') && form.querySelector('#consent').checked;
- 
-    return false;
+  return data;
+}
+
+/** Render the decision banner/area on the page using a styled div for accessibility. */
+function renderDecision(result) {
+  const el = document.getElementById('decision-result');
+  if (!el) return;
+  el.hidden = false;
+  // Clear prior classes and content
+  el.className = '';
+  el.innerHTML = '';
+
+  // Build content: inline SVG icon + two-line content
+  if (result.decision === 'approved') {
+    el.classList.add('decision-banner', 'decision-banner--approved');
+    el.setAttribute('role', 'status');
+    el.setAttribute('tabindex', '-1');
+    el.setAttribute('aria-live', 'polite');
+    el.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="10" fill="#10b981" opacity="0.12"/>
+        <path d="M7 13l3 3 7-7" stroke="#047857" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="decision-content">
+        <div class="decision-title">Approved</div>
+        <div class="decision-sub">Credit line: <span class="decision-amount">$${(result.creditAmount || 0).toLocaleString()}</span></div>
+      </div>
+    `;
+  } else {
+    el.classList.add('decision-banner', 'decision-banner--declined');
+    el.setAttribute('role', 'status');
+    el.setAttribute('tabindex', '-1');
+    el.setAttribute('aria-live', 'polite');
+    const reasonText = result.reason ? result.reason.replace(/_/g, ' ') : 'Not eligible.';
+    el.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="10" fill="#f43f5e" opacity="0.08"/>
+        <path d="M15 9L9 15M9 9l6 6" stroke="#b91c1c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="decision-content">
+        <div class="decision-title">Declined</div>
+        <div class="decision-sub">${escapeHtml(reasonText)}</div>
+        <ul class="decision-alternatives">
+          <li>Consider requesting a smaller credit amount and re-applying.</li>
+          <li>Try again later after updating your income information or savings.</li>
+          <li>See our <a href="index.html#faq">FAQ</a> or <a href="mailto:sales@titancoffeerun.example">contact support</a> for other options.</li>
+        </ul>
+      </div>
+    `;
   }
 
-  // If no validation errors, run local qualification first and show the result.
-  // This avoids a 405 when serving the site with a static server during development.
-  const decision = validateAndQualify(data);
+  // Move focus to the banner so assistive tech announces it. Keep tabindex so it's focusable momentarily.
+  // Use setTimeout to ensure DOM updates take effect before focusing.
+  setTimeout(() => {
+    try { el.focus(); } catch (e) { /* ignore focus failures */ }
+    // remove tabindex after short time so banner isn't in tab order permanently
+    setTimeout(() => el.removeAttribute('tabindex'), 1200);
+  }, 40);
+}
 
-  const decisionEl = document.getElementById('decision-result');
-  if (decisionEl) {
-    decisionEl.hidden = false;
-    decisionEl.innerHTML = '';
-    if (decision.errors && decision.errors.length) {
-      // shouldn't happen because we validated above, but handle defensively
-      const p = document.createElement('p');
-      p.textContent = 'Validation errors present.';
-      decisionEl.appendChild(p);
-      announce('Validation errors present. Please review the highlighted fields.');
-    } else if (decision.decision === 'approved') {
-      const p = document.createElement('p');
-      p.innerHTML = `<strong>Congratulations — approved</strong>. Your provisional credit line is <strong>$${decision.creditAmount.toLocaleString()}</strong>.`;
-      decisionEl.appendChild(p);
-      // Show a visual success banner for better UX
-      showSuccessBanner(`Approved — provisional credit: $${decision.creditAmount.toLocaleString()}`);
-      // Emphasize in console with styling
-      console.log('%cCredit approved: $' + decision.creditAmount.toLocaleString(), 'background: #10b981; color: white; padding:8px 10px; font-size:14px; border-radius:4px');
-      // Announce the approval to screen readers
-      announce(`Application approved. Provisional credit: $${decision.creditAmount.toLocaleString()}`);
-    } else if (decision.decision === 'declined') {
-      const p = document.createElement('p');
-      p.innerHTML = `<strong>We're sorry — you do not qualify at this time.</strong> Reason: ${decision.reason || 'Not eligible'}.`;
-      decisionEl.appendChild(p);
-      const info = document.createElement('p');
-      info.className = 'field-help';
-      info.textContent = 'If you believe this is an error, contact sales@titancoffeerun.example to discuss next steps.';
-      decisionEl.appendChild(info);
-      announce(`Application declined. Reason: ${decision.reason || 'Not eligible'}.`);
+/** Escape HTML for safe insertion into table cells. */
+function escapeHtml(value) {
+  if (value === null || value === undefined) return '';
+  return String(value).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[c]));
+}
+
+/** Render the errors table body given an array of error objects. */
+function renderErrorsTable(errors) {
+  const tbody = document.querySelector('#errors-table tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  const now = new Date().toLocaleString();
+  errors.forEach((err) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="padding:.5rem;border-top:1px solid #eee">${escapeHtml(err.field)}</td>
+      <td style="padding:.5rem;border-top:1px solid #eee">${escapeHtml(err.message)}</td>
+      <td style="padding:.5rem;border-top:1px solid #eee">${now}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/** Format a field value for display in the results table. Masks sensitive fields. */
+function formatValueForField(field, raw) {
+  if (field === 'grossIncome' || field === 'requestedAmount') {
+    if (raw === undefined || raw === '' || raw === null) return 'Not provided';
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return escapeHtml(String(raw));
+    return '$' + n.toLocaleString();
+  }
+  if (field === 'consent') {
+    return raw ? 'Yes' : 'No';
+  }
+  if (field === 'ssnLast4') {
+    if (!raw) return 'Not provided';
+    return '•••• ' + escapeHtml(String(raw).slice(-4));
+  }
+  if (raw === undefined || raw === null || String(raw).trim() === '') return 'Not provided';
+  return escapeHtml(String(raw));
+}
+
+/** Render a combined validation-results table showing valid/invalid rows. */
+function renderValidationResults(form, data = {}, errors = []) {
+  const tbody = document.querySelector('#errors-table tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  const now = new Date().toLocaleString();
+  const errorMap = {};
+  (errors || []).forEach((e) => { errorMap[e.field] = e.message; });
+
+  FIELD_ORDER.forEach((fieldId) => {
+    const tr = document.createElement('tr');
+    const labelCell = document.createElement('td');
+    labelCell.style.padding = '.5rem';
+    labelCell.style.borderTop = '1px solid #eee';
+    labelCell.textContent = FIELD_LABELS[fieldId] || fieldId;
+
+    const valueCell = document.createElement('td');
+    valueCell.style.padding = '.5rem';
+    valueCell.style.borderTop = '1px solid #eee';
+
+    const statusCell = document.createElement('td');
+    statusCell.style.padding = '.5rem';
+    statusCell.style.borderTop = '1px solid #eee';
+
+    const err = errorMap[fieldId];
+    if (err) {
+      tr.classList.add('validation-row--invalid');
+      valueCell.textContent = err;
+      statusCell.textContent = 'Invalid';
+      statusCell.setAttribute('aria-label', 'Invalid');
+    } else {
+      const raw = data[fieldId];
+      valueCell.textContent = formatValueForField(fieldId, raw);
+      tr.classList.add('validation-row--valid');
+      statusCell.textContent = 'Valid';
+      statusCell.setAttribute('aria-label', 'Valid');
     }
-  }
 
-// Initialize when DOM is ready
+    // timestamp column for context
+    const timeCell = document.createElement('td');
+    timeCell.style.padding = '.5rem';
+    timeCell.style.borderTop = '1px solid #eee';
+    timeCell.textContent = now;
+
+    tr.appendChild(labelCell);
+    tr.appendChild(valueCell);
+    tr.appendChild(statusCell);
+    tr.appendChild(timeCell);
+    tbody.appendChild(tr);
+  });
+}
+
+/** Export the errors array as a CSV and trigger download. */
+function exportErrorsCsv(errors) {
+  if (!errors || !errors.length) return;
+  const rows = [['field', 'message', 'when']];
+  const now = new Date().toLocaleString();
+  errors.forEach((e) => rows.push([e.field, e.message, now]));
+  const csv = rows
+    .map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'validation_errors.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// ---------- Page behavior: event handlers and wiring ----------
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('credit-application-form');
   const summaryEl = document.getElementById('validation-summary');
+  const errorsStore = [];
+  let latestData = {};
+  let latestErrors = [];
+
   if (!form) return;
 
-  // Debounce helper to avoid validating on every keystroke
-  function debounce(fn, wait = 250) {
-    let t = null;
-    return (...args) => {
-      if (t) clearTimeout(t);
-      t = setTimeout(() => fn(...args), wait);
-    };
+  /** Show or hide the summary area with a list of errors. */
+  function showSummary(errors) {
+    if (!summaryEl) return;
+    if (!errors || !errors.length) {
+      summaryEl.hidden = true;
+      summaryEl.innerHTML = '';
+      return;
+    }
+    summaryEl.hidden = false;
+    summaryEl.innerHTML = '<h4>Please correct the following errors:</h4><ul>' +
+      errors.map((e) => `<li>${escapeHtml(e.field)}: ${escapeHtml(e.message)}</li>`).join('') +
+      '</ul>';
   }
 
-  // Validate a single field and show/hide inline message
-  function validateOneField(fieldName) {
-    const fd = new FormData(form);
-    const data = Object.fromEntries(fd.entries());
-    data.consent = !!form.querySelector('#consent') && form.querySelector('#consent').checked;
-    const err = validateField(fieldName, data);
+  /** Handle the form submit: validate, show errors or show decision. */
+  function onSubmit(event) {
+    event.preventDefault();
+    clearFieldErrors(form);
+    const data = collectFormData(form);
+    const errors = validateAllFields(data);
 
-    const fieldEl = form.querySelector(`#${fieldName}`);
-    if (!fieldEl) return;
-    const parentRow = fieldEl.closest('.form-row') || fieldEl.parentNode;
-    // remove existing inline errors in this parent
-    parentRow.querySelectorAll('.' + FIELD_ERROR_CLASS).forEach(n => n.remove());
-    fieldEl.removeAttribute('aria-invalid');
-    if (err) {
-      fieldEl.setAttribute('aria-invalid', 'true');
-      parentRow.appendChild(createErrorNode(err.message));
+    if (errors.length) {
+      showSummary(errors);
+      // store latest snapshot and render combined results (valid + invalid)
+      latestData = data;
+      latestErrors = errors;
+      renderValidationResults(form, data, errors);
+      // keep a copy for backward-compatible export/print behavior
+      errorsStore.length = 0;
+      errors.forEach((e) => errorsStore.push(e));
+
+      // show inline errors and focus the first invalid field
+      const firstSelector = `#${errors[0].field}`;
+      errors.forEach((err) => {
+        const fieldEl = form.querySelector(`#${err.field}`);
+        if (fieldEl) {
+          fieldEl.setAttribute('aria-invalid', 'true');
+          const node = createErrorNode(err.message);
+          (fieldEl.closest('.form-row') || fieldEl.parentNode).appendChild(node);
+        }
+      });
+      const first = form.querySelector(firstSelector);
+      if (first && typeof first.focus === 'function') first.focus();
+      return;
     }
 
-    // update global summary
-    const allErrors = validateAllFields(data);
-    showValidationSummary(summaryEl, allErrors);
+  // valid: clear summary/data store and show decision
+  showSummary([]);
+  latestData = data;
+  latestErrors = [];
+  renderValidationResults(form, data, []);
+  errorsStore.length = 0;
+  const result = qualifyApplicant(data);
+  renderDecision(result);
   }
 
-  // Attach validation-on-leave listeners: validate when the user leaves the field (blur)
-  // This avoids noisy keystroke-by-keystroke errors and improves UX.
-  const validateOnLeaveFields = ['email','emailConfirm','firstName','lastName','city','state','zip','grossIncome','ssnLast4','consent'];
-  validateOnLeaveFields.forEach((field) => {
-    const el = form.querySelector(`#${field}`);
+  form.addEventListener('submit', onSubmit);
+
+  // Per-field blur/change validation to keep the UX responsive
+  const blurFields = ['email','emailConfirm','firstName','lastName','city','state','zip','grossIncome','ssnLast4','consent'];
+  blurFields.forEach((fieldName) => {
+    const el = form.querySelector(`#${fieldName}`);
     if (!el) return;
-    const handler = () => validateOneField(field);
+
+    function onFieldValidate() {
+      const data = collectFormData(form);
+      const err = validateField(fieldName, data);
+
+      // Clear existing inline errors for this field
+      const parent = el.closest('.form-row') || el.parentNode;
+      parent.querySelectorAll(`.${FIELD_ERROR_CLASS}`).forEach((n) => n.remove());
+      el.removeAttribute('aria-invalid');
+
+      if (err) {
+        el.setAttribute('aria-invalid', 'true');
+        parent.appendChild(createErrorNode(err.message));
+      }
+
+  const all = validateAllFields(data);
+  latestData = data;
+  latestErrors = all;
+  showSummary(all);
+  renderValidationResults(form, data, all);
+  errorsStore.length = 0;
+  all.forEach((e) => errorsStore.push(e));
+    }
+
     if (el.type === 'checkbox' || el.tagName === 'SELECT') {
-      // checkboxes and selects validate on change
-      el.addEventListener('change', handler);
+      el.addEventListener('change', onFieldValidate);
     } else {
-      // only validate on blur (when user leaves the field)
-      el.addEventListener('blur', handler);
+      el.addEventListener('blur', onFieldValidate);
     }
   });
 
-  // Attach submit handler to prevent default and validate
-  form.addEventListener('submit', (e) => handleValidationAndMaybeSubmit(form, summaryEl, e));
+  // Export / print / clear buttons wiring
+  const exportBtn = document.getElementById('exportErrorsBtn');
+  if (exportBtn) exportBtn.addEventListener('click', () => exportValidationCsv(latestData, latestErrors));
 
-  // Add click listener to apply button id requested by user
-  const applyButton = document.getElementById('applyButton') || document.getElementById('applyBtn');
-  if (applyButton) {
-    applyButton.addEventListener('click', (e) => {
-      // prevent default and validate before submission
-      e.preventDefault();
-      handleValidationAndMaybeSubmit(form, summaryEl, e);
-    });
-  }
+  const printBtn = document.getElementById('printErrorsBtn');
+  if (printBtn) printBtn.addEventListener('click', () => {
+    const tbl = document.getElementById('errors-table');
+    if (!tbl) return;
+    const w = window.open('', '_blank');
+    w.document.write('<html><head><title>Validation errors</title></head><body>');
+    w.document.write(tbl.outerHTML);
+    w.document.write('</body></html>');
+    w.document.close();
+    w.focus();
+    setTimeout(() => { w.print(); w.close(); }, 200);
+  });
 
-  // Reset behavior: clear inline errors and hide summary
+  const clearBtn = document.getElementById('clearErrorsBtn');
+  if (clearBtn) clearBtn.addEventListener('click', () => {
+    const tbody = document.querySelector('#errors-table tbody');
+    if (tbody) tbody.innerHTML = '';
+    errorsStore.length = 0;
+    latestData = {};
+    latestErrors = [];
+    if (summaryEl) { summaryEl.hidden = true; summaryEl.innerHTML = ''; }
+    clearFieldErrors(form);
+  });
+
+  // Reset handler: ensure UI is cleared after form reset
   form.addEventListener('reset', () => {
-    setTimeout(() => { // allow native reset to happen first
+    setTimeout(() => {
+      // Clear inline field errors and validation summary/table
       clearFieldErrors(form);
-      showValidationSummary(summaryEl, []);
+      if (summaryEl) { summaryEl.hidden = true; summaryEl.innerHTML = ''; }
+      const tbody = document.querySelector('#errors-table tbody');
+      if (tbody) tbody.innerHTML = '';
+      errorsStore.length = 0;
+      latestData = {};
+      latestErrors = [];
+
+      // Hide and clear the decision banner, remove ARIA attributes so it's not announced
+      const decisionEl = document.getElementById('decision-result');
+      if (decisionEl) {
+        decisionEl.hidden = true;
+        decisionEl.className = '';
+        decisionEl.innerHTML = '';
+        decisionEl.removeAttribute('role');
+        decisionEl.removeAttribute('aria-live');
+        decisionEl.removeAttribute('tabindex');
+      }
+
+      // Return focus to the first focusable control in the form
+      const firstControl = form.querySelector('input, select, textarea, button');
+      if (firstControl && typeof firstControl.focus === 'function') firstControl.focus();
     }, 0);
   });
 });
+
+/** Export combined validation results (valid + invalid rows) as CSV */
+function exportValidationCsv(data = {}, errors = []) {
+  const rows = [[ 'field', 'label', 'status', 'value_or_message', 'when' ]];
+  const now = new Date().toLocaleString();
+  const errorMap = {};
+  (errors || []).forEach((e) => { errorMap[e.field] = e.message; });
+  FIELD_ORDER.forEach((fieldId) => {
+    const label = FIELD_LABELS[fieldId] || fieldId;
+    const err = errorMap[fieldId];
+    const status = err ? 'Invalid' : 'Valid';
+    const value = err ? err : formatValueForField(fieldId, data[fieldId]);
+    rows.push([fieldId, label, status, value, now]);
+  });
+  const csv = rows.map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'validation_results.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}

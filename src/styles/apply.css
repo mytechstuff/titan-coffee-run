@@ -51,6 +51,82 @@ body{
   font-weight: 600;
 }
 
+/* Decision banner: unified container for approval/decline messaging */
+.decision-banner {
+  display:flex;
+  gap:0.75rem;
+  align-items:center;
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-weight:700;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+  transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+  opacity: 0.98;
+}
+
+.decision-banner svg { flex:0 0 28px; height:28px; width:28px }
+
+.decision-banner--approved {
+  background: linear-gradient(180deg,#ecfdf5 0%, #f0fdf4 100%);
+  border: 1px solid #10b981;
+  color: #064e3b;
+}
+
+.decision-banner--declined {
+  background: linear-gradient(180deg,#fff1f2 0%, #fff6f7 100%);
+  border: 1px solid #f43f5e;
+  color: #881337;
+}
+
+.decision-banner .decision-content { display:flex; flex-direction:column }
+.decision-banner .decision-title { font-size:1rem; margin:0 }
+.decision-banner .decision-sub { font-size:0.95rem; color:var(--muted); font-weight:600 }
+
+/* small accent for approved credit amount */
+.decision-amount { color: #0b5; font-weight:800 }
+
+/* keyboard focus style when banner is targeted */
+.decision-banner:focus { outline:3px solid rgba(79,70,229,0.12); outline-offset:2px }
+
+/* Alternatives list inside the decision banner */
+.decision-alternatives{margin:.5rem 0 0;padding-left:1.25rem}
+.decision-alternatives li{margin:.25rem 0;color:var(--muted);font-weight:600}
+.decision-alternatives a{color:var(--accent);text-decoration:underline}
+
+/* Layout change: show decision banner as a left column sticky box on larger screens */
+@media (min-width: 900px){
+  /* make the banner a narrow sticky box to the left of the form */
+  #decision-result {
+    width: 320px;
+    position: sticky;
+    top: 1.25rem;
+    float: left;
+    margin-right: 1rem;
+    z-index: 2;
+  }
+
+  /* shift the form to the right so it doesn't overlap the banner */
+  .credit-form {
+    margin-left: calc(320px + 1rem);
+  }
+
+  /* On wider screens, place errors-report under the form but keep the aside on the right */
+  #errors-report{clear:both}
+}
+
+/* On small screens keep decision banner full-width and above the form (default) */
+@media (max-width: 899px){
+  #decision-result{float:none;width:100%}
+  .credit-form{margin-left:0}
+}
+
+/* Validation results rows */
+.validation-row--valid { background: #f6fffa; }
+.validation-row--invalid { background: #fff6f6; }
+
+.errors-table td { vertical-align: middle }
+
 .credit-form{
   background:var(--card);
   border-radius:var(--radius);
