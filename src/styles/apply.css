@@ -127,6 +127,72 @@ body{
 
 .errors-table td { vertical-align: middle }
 
+/* Professional table styling for validation results */
+.errors-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  color: #0f172a;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.04);
+}
+.errors-table thead th{
+  text-align: left;
+  padding: 0.75rem 0.9rem;
+  background: linear-gradient(180deg,#f8fafc, #f1f5f9);
+  color:#111827;
+  font-weight:700;
+  border-bottom:1px solid #e6eef7;
+}
+.errors-table tbody td{
+  padding: 0.6rem 0.9rem;
+  border-top: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+/* value column: truncate long values nicely */
+.errors-table td.value-cell{
+  max-width: 36ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Row styles for valid / invalid states */
+.validation-row--valid{
+  background: linear-gradient(90deg, rgba(16,185,129,0.04), rgba(16,185,129,0.02));
+}
+.validation-row--invalid{
+  background: linear-gradient(90deg, rgba(244,63,94,0.04), rgba(244,63,94,0.02));
+}
+
+/* Strong left accent bar for quick scanning */
+.validation-row--valid td:first-child{ box-shadow: inset 4px 0 0 #10b981; }
+.validation-row--invalid td:first-child{ box-shadow: inset 4px 0 0 #ef4444; }
+
+/* Status badge to make Valid/Invalid approachable */
+.status-badge{
+  display:inline-block;
+  padding:0.18rem 0.5rem;
+  border-radius:999px;
+  font-size:0.8rem;
+  font-weight:700;
+  letter-spacing:0.02em;
+}
+.status-badge.valid{ background: rgba(16,185,129,0.12); color: #064e3b; }
+.status-badge.invalid{ background: rgba(244,63,94,0.08); color: #7f1d1d; }
+
+/* hover / focus affordance for readability */
+.errors-table tbody tr:hover{ transform: translateY(-1px); box-shadow: 0 6px 18px rgba(2,6,23,0.04); }
+
+/* Print-friendly adjustments */
+@media print{
+  .errors-table{ box-shadow:none; background:transparent }
+  .errors-table thead th{ background: #f8fafc }
+}
+
 .credit-form{
   background:var(--card);
   border-radius:var(--radius);

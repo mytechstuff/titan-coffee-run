@@ -49,24 +49,47 @@ const DEFAULTS = {
  * We keep regex conservative to avoid rejecting valid emails; server should
  * re-validate with stricter checks if needed.
  */
+/**
+ * Check if value is a simple valid email (not exhaustive). Returns boolean.
+ * We keep regex conservative to avoid rejecting valid emails; server should
+ * re-validate with stricter checks if needed.
+ * @param {string} value
+ * @returns {boolean}
+ */
 export function isEmail(value) {
   if (!value) return false;
   // simple RFC-like check (not full RFC 5322)
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(value).trim());
 }
 
+/**
+ * Case-insensitive equality check for two email values.
+ * @param {string} a
+ * @param {string} b
+ * @returns {boolean}
+ */
 export function matchEmails(a, b) {
   if (!a || !b) return false;
   return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
 }
 
 /** Last-4 SSN validation: 4 digits */
+/**
+ * Validate SSN last-4: must be 4 digits.
+ * @param {string} value
+ * @returns {boolean}
+ */
 export function isSSNLast4(value) {
   if (!value) return false;
   return /^\d{4}$/.test(String(value).trim());
 }
 
 /** Numeric range check for gross income (non-negative integer or float allowed) */
+/**
+ * Numeric check: true when value converts to a finite number >= 0.
+ * @param {any} value
+ * @returns {boolean}
+ */
 export function isNonNegativeNumber(value) {
   if (value === null || value === undefined || value === '') return false;
   const n = Number(value);
@@ -84,6 +107,11 @@ const US_STATES = new Set([
   'DC'
 ]);
 
+/**
+ * Check whether a given value is a recognized US 2-letter state code.
+ * @param {string} value
+ * @returns {boolean}
+ */
 export function isValidState(value) {
   if (!value) return false;
   return US_STATES.has(String(value).trim().toUpperCase());
@@ -94,6 +122,12 @@ export function isValidState(value) {
 /**
  * Validate a form data object and return an array of error objects: { field, code, message }
  * This function is pure and does not touch the DOM.
+ */
+/**
+ * Validate a form data object and return an array of error objects: { field, code, message }
+ * This function is pure and does not touch the DOM.
+ * @param {Object} data
+ * @returns {Array<{field:string,code:string,message:string}>}
  */
 export function validateFields(data = {}) {
   const errors = [];
@@ -138,6 +172,13 @@ export function validateFields(data = {}) {
  * validateAllFields
  * Loop through all expected form fields and validate each according to rules.
  * Returns an array of error objects: { field, message }
+ */
+/**
+ * validateAllFields
+ * Loop through all expected form fields and validate each according to rules.
+ * Returns an array of error objects: { field, message }
+ * @param {Object} data
+ * @returns {Array<{field:string,message:string}>}
  */
 export function validateAllFields(data = {}) {
   const errors = [];
@@ -195,6 +236,14 @@ export function validateAllFields(data = {}) {
  * Determine credit eligibility and amount based on income and configurable rules.
  * Returns an object: { decision: 'approved'|'declined', creditAmount: number|null, reason?: string }
  * Keep the logic simple and deterministic to make testing straightforward.
+ */
+/**
+ * Determine credit eligibility and amount based on income and configurable rules.
+ * Returns an object: { decision: 'approved'|'declined', creditAmount: number|null, reason?: string }
+ * Keep the logic simple and deterministic to make testing straightforward.
+ * @param {Object} data
+ * @param {Object} [options]
+ * @returns {{decision:string, creditAmount:number|null, reason?:string}}
  */
 export function qualifyApplicant(data = {}, options = {}) {
   const cfg = { ...DEFAULTS, ...options };
@@ -257,6 +306,9 @@ export function validateAndQualify(data = {}, options = {}) {
  * validateField(field, data)
  * Validate a single field using the provided data object (so cross-field checks work).
  * Returns null when valid, or an error object { field, message } when invalid.
+ * @param {string} field
+ * @param {Object} [data]
+ * @returns {{field:string,message:string}|null}
  */
 export function validateField(field, data = {}) {
   switch (field) {

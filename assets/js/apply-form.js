@@ -1,3 +1,15 @@
+/**
+ * assets/js/apply-form.js
+ * ------------------------
+ * Client-side form wiring for the Titan Coffee Run credit application.
+ * Responsibilities:
+ *  - Wire DOM events for the application form in `apply.html`
+ *  - Use canonical validators/qualification from `src/qualify.js`
+ *  - Render accessible inline errors, a combined validation-results table, and decision banner
+ *
+ * Environment: Browser (ES modules). No server required for base operation.
+ * Author: Generated/edited by automation + developer
+ */
 // Module imports: use the canonical validation/qualification helpers from src/qualify.js
 // This centralizes the business rules so server and client can share the same logic.
 import { validateAllFields, validateField, qualifyApplicant } from '../../src/qualify.js';
@@ -20,9 +32,17 @@ const FIELD_LABELS = {
 };
 // ---------- UI helpers (DOM updates) ----------
 
-/** Create a DOM node to show an inline field error. */
-function createErrorNode(message) {
+/**
+ * Create a DOM node to show an inline field error.
+ * Adds a stable id so callers can reference it from `aria-describedby`.
+ * @param {string} message - Human-friendly error message
+ * @param {string} [idHint] - Optional hint to form the id (usually the field name)
+ * @returns {HTMLElement} error node with an `id` attribute
+ */
+function createErrorNode(message, idHint) {
   const node = document.createElement('div');
+  const id = `${String(idHint || 'err')}-${Math.random().toString(36).slice(2, 9)}`;
+  node.id = id;
   node.className = FIELD_ERROR_CLASS;
   node.style.color = 'var(--danger)';
   node.style.fontSize = '0.9rem';
@@ -31,27 +51,75 @@ function createErrorNode(message) {
 }
 
 /** Remove inline error nodes and aria-invalid attributes inside the form. */
+/**
+ * Remove a specific id from an element's `aria-describedby` attribute.
+ * This helper ensures we don't leave references to removed error nodes which
+ * could confuse assistive technologies.
+ * @param {Element} el - The element whose aria-describedby should be updated
+ * @param {string} id - The id to remove from the aria-describedby list
+ * @returns {void}
+ */
+function _removeIdFromDescribedBy(el, id) {
+  if (!el || !id) return;
+  const desc = (el.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+  const filtered = desc.filter((x) => x !== id);
+  if (filtered.length) el.setAttribute('aria-describedby', filtered.join(' '));
+  else el.removeAttribute('aria-describedby');
+}
+
+/**
+ * Remove inline error nodes and aria-invalid/aria-describedby attributes inside the form.
+ * Ensures screen reader associations are cleaned up when error nodes are removed.
+ * @param {HTMLFormElement} form
+ */
 function clearFieldErrors(form) {
-  form.querySelectorAll(`.${FIELD_ERROR_CLASS}`).forEach((n) => n.remove());
+  form.querySelectorAll(`.${FIELD_ERROR_CLASS}`).forEach((n) => {
+    try {
+      // If this error node was appended inside a .form-row, remove its id from the
+      // related input's aria-describedby so AT won't reference a missing id.
+      const row = n.closest('.form-row');
+      if (row) {
+        const fieldEl = row.querySelector('input, select, textarea');
+        if (fieldEl && n.id) _removeIdFromDescribedBy(fieldEl, n.id);
+      }
+    } catch (e) {
+      // ignore cleanup errors
+    }
+    n.remove();
+  });
   form.querySelectorAll('[aria-invalid="true"]').forEach((el) => el.removeAttribute('aria-invalid'));
 }
 
-/** Collect form input values into a plain object. */
+/**
+ * Collect form input values into a plain object suitable for validation functions.
+ * Normalizes checkbox values (consent) to boolean and keeps the same property
+ * names expected by `src/qualify.js` helpers.
+ * @param {HTMLFormElement} form
+ * @returns {Object} key/value map of form fields (e.g. { email, grossIncome, consent, ... })
+ */
 function collectFormData(form) {
   const fd = new FormData(form);
   const data = Object.fromEntries(fd.entries());
+  // Normalize consent checkbox into a boolean value
   data.consent = !!form.querySelector('#consent') && form.querySelector('#consent').checked;
   return data;
 }
 
-/** Render the decision banner/area on the page using a styled div for accessibility. */
+/**
+ * Render the decision banner/area on the page using a styled div for accessibility.
+ * Expected `result` shape: { decision: 'approved'|'declined', creditAmount?: number, reason?: string }
+ * Side effects: updates DOM, sets `role="status"` and `aria-live="polite"`, and briefly focuses the banner
+ * so assistive tech announces the message.
+ * @param {Object} result
+ * @returns {void}
+ */
 function renderDecision(result) {
   const el = document.getElementById('decision-result');
   if (!el) return;
   el.hidden = false;
   // Clear prior classes and content
   el.className = '';
-  el.innerHTML = '';
+  el.replaceChildren();
 
   // Build content: inline SVG icon + two-line content
   if (result.decision === 'approved') {
@@ -101,7 +169,11 @@ function renderDecision(result) {
   }, 40);
 }
 
-/** Escape HTML for safe insertion into table cells. */
+/**
+ * Escape HTML characters to prevent injection when rendering into table cells.
+ * @param {any} value
+ * @returns {string}
+ */
 function escapeHtml(value) {
   if (value === null || value === undefined) return '';
   return String(value).replace(/[&<>"']/g, (c) => ({
@@ -113,11 +185,15 @@ function escapeHtml(value) {
   }[c]));
 }
 
-/** Render the errors table body given an array of error objects. */
+/**
+ * Render the errors table body given an array of error objects.
+ * @param {Array<{field:string,message:string}>} errors
+ * @returns {void}
+ */
 function renderErrorsTable(errors) {
   const tbody = document.querySelector('#errors-table tbody');
   if (!tbody) return;
-  tbody.innerHTML = '';
+  tbody.replaceChildren();
   const now = new Date().toLocaleString();
   errors.forEach((err) => {
     const tr = document.createElement('tr');
@@ -130,7 +206,12 @@ function renderErrorsTable(errors) {
   });
 }
 
-/** Format a field value for display in the results table. Masks sensitive fields. */
+/**
+ * Format a field value for display in the results table. Masks sensitive fields.
+ * @param {string} field
+ * @param {any} raw
+ * @returns {string}
+ */
 function formatValueForField(field, raw) {
   if (field === 'grossIncome' || field === 'requestedAmount') {
     if (raw === undefined || raw === '' || raw === null) return 'Not provided';
@@ -149,11 +230,20 @@ function formatValueForField(field, raw) {
   return escapeHtml(String(raw));
 }
 
-/** Render a combined validation-results table showing valid/invalid rows. */
+/**
+ * Render a combined validation-results table showing valid and invalid rows.
+ * This method reads `FIELD_ORDER` and `FIELD_LABELS` to build rows and marks
+ * rows visually based on validity.
+ * @param {HTMLFormElement} form
+ * @param {Object} data - Form data object (from collectFormData)
+ * @param {Array<{field:string,message:string}>} errors - Validation errors
+ * @returns {void}
+ */
 function renderValidationResults(form, data = {}, errors = []) {
   const tbody = document.querySelector('#errors-table tbody');
   if (!tbody) return;
-  tbody.innerHTML = '';
+  // Remove previous rows safely
+  tbody.replaceChildren();
   const now = new Date().toLocaleString();
   const errorMap = {};
   (errors || []).forEach((e) => { errorMap[e.field] = e.message; });
@@ -168,6 +258,8 @@ function renderValidationResults(form, data = {}, errors = []) {
     const valueCell = document.createElement('td');
     valueCell.style.padding = '.5rem';
     valueCell.style.borderTop = '1px solid #eee';
+  // mark this cell so long values truncate via CSS
+  valueCell.classList.add('value-cell');
 
     const statusCell = document.createElement('td');
     statusCell.style.padding = '.5rem';
@@ -177,13 +269,13 @@ function renderValidationResults(form, data = {}, errors = []) {
     if (err) {
       tr.classList.add('validation-row--invalid');
       valueCell.textContent = err;
-      statusCell.textContent = 'Invalid';
+      statusCell.innerHTML = `<span class="status-badge invalid">Invalid</span>`;
       statusCell.setAttribute('aria-label', 'Invalid');
     } else {
       const raw = data[fieldId];
       valueCell.textContent = formatValueForField(fieldId, raw);
       tr.classList.add('validation-row--valid');
-      statusCell.textContent = 'Valid';
+      statusCell.innerHTML = `<span class="status-badge valid">Valid</span>`;
       statusCell.setAttribute('aria-label', 'Valid');
     }
 
@@ -201,7 +293,11 @@ function renderValidationResults(form, data = {}, errors = []) {
   });
 }
 
-/** Export the errors array as a CSV and trigger download. */
+/**
+ * Export the errors array as a CSV and trigger download.
+ * @param {Array<{field:string,message:string}>} errors
+ * @returns {void}
+ */
 function exportErrorsCsv(errors) {
   if (!errors || !errors.length) return;
   const rows = [['field', 'message', 'when']];
@@ -231,12 +327,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!form) return;
 
-  /** Show or hide the summary area with a list of errors. */
+  /**
+   * Show or hide the summary area with a list of errors.
+   * Renders a short heading and a list of field: message items.
+   * @param {Array<{field:string,message:string}>} errors
+   * @returns {void}
+   */
   function showSummary(errors) {
     if (!summaryEl) return;
     if (!errors || !errors.length) {
       summaryEl.hidden = true;
-      summaryEl.innerHTML = '';
+      summaryEl.replaceChildren();
       return;
     }
     summaryEl.hidden = false;
@@ -245,7 +346,12 @@ document.addEventListener('DOMContentLoaded', () => {
       '</ul>';
   }
 
-  /** Handle the form submit: validate, show errors or show decision. */
+  /**
+   * Handle the form submit: run validation, render errors or qualification decision.
+   * Prevents the default form submission and uses client-side helpers.
+   * @param {Event} event
+   * @returns {void}
+   */
   function onSubmit(event) {
     event.preventDefault();
     clearFieldErrors(form);
@@ -268,8 +374,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const fieldEl = form.querySelector(`#${err.field}`);
         if (fieldEl) {
           fieldEl.setAttribute('aria-invalid', 'true');
-          const node = createErrorNode(err.message);
-          (fieldEl.closest('.form-row') || fieldEl.parentNode).appendChild(node);
+          const node = createErrorNode(err.message, err.field);
+          const parent = (fieldEl.closest('.form-row') || fieldEl.parentNode);
+          parent.appendChild(node);
+          // associate the error with the field for screen readers
+          const described = (fieldEl.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+          described.push(node.id);
+          fieldEl.setAttribute('aria-describedby', described.join(' '));
         }
       });
       const first = form.querySelector(firstSelector);
@@ -299,14 +410,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = collectFormData(form);
       const err = validateField(fieldName, data);
 
-      // Clear existing inline errors for this field
+      // Clear existing inline errors for this field and clean up aria-describedby
       const parent = el.closest('.form-row') || el.parentNode;
-      parent.querySelectorAll(`.${FIELD_ERROR_CLASS}`).forEach((n) => n.remove());
+      parent.querySelectorAll(`.${FIELD_ERROR_CLASS}`).forEach((n) => {
+        try { if (n.id) _removeIdFromDescribedBy(el, n.id); } catch (e) { /* ignore */ }
+        n.remove();
+      });
       el.removeAttribute('aria-invalid');
 
       if (err) {
         el.setAttribute('aria-invalid', 'true');
-        parent.appendChild(createErrorNode(err.message));
+        const node = createErrorNode(err.message, fieldName);
+        parent.appendChild(node);
+        const described = (el.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+        described.push(node.id);
+        el.setAttribute('aria-describedby', described.join(' '));
       }
 
   const all = validateAllFields(data);
@@ -345,11 +463,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const clearBtn = document.getElementById('clearErrorsBtn');
   if (clearBtn) clearBtn.addEventListener('click', () => {
     const tbody = document.querySelector('#errors-table tbody');
-    if (tbody) tbody.innerHTML = '';
+    if (tbody) tbody.replaceChildren();
     errorsStore.length = 0;
     latestData = {};
     latestErrors = [];
-    if (summaryEl) { summaryEl.hidden = true; summaryEl.innerHTML = ''; }
+  if (summaryEl) { summaryEl.hidden = true; summaryEl.replaceChildren(); }
     clearFieldErrors(form);
   });
 
@@ -358,9 +476,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       // Clear inline field errors and validation summary/table
       clearFieldErrors(form);
-      if (summaryEl) { summaryEl.hidden = true; summaryEl.innerHTML = ''; }
+  if (summaryEl) { summaryEl.hidden = true; summaryEl.replaceChildren(); }
       const tbody = document.querySelector('#errors-table tbody');
-      if (tbody) tbody.innerHTML = '';
+  if (tbody) tbody.replaceChildren();
       errorsStore.length = 0;
       latestData = {};
       latestErrors = [];
@@ -370,7 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (decisionEl) {
         decisionEl.hidden = true;
         decisionEl.className = '';
-        decisionEl.innerHTML = '';
+        decisionEl.replaceChildren();
         decisionEl.removeAttribute('role');
         decisionEl.removeAttribute('aria-live');
         decisionEl.removeAttribute('tabindex');
@@ -385,6 +503,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /** Export combined validation results (valid + invalid rows) as CSV */
 function exportValidationCsv(data = {}, errors = []) {
+  /**
+   * Export combined validation results (valid + invalid rows) as CSV and trigger download.
+   * @param {Object} data - form data
+   * @param {Array<{field:string,message:string}>} errors - validation errors
+   * @returns {void}
+   */
   const rows = [[ 'field', 'label', 'status', 'value_or_message', 'when' ]];
   const now = new Date().toLocaleString();
   const errorMap = {};
