@@ -4,9 +4,24 @@ Date: 2025-11-05
 
 This document summarizes Sprint 1 tasks, what was implemented, current status, files changed, acceptance criteria, and next steps for each task.
 
+GitHub Pages link: https://mytechstuff.github.io/titan-coffee-run/
 
 
 ---
+## Sprint 1 Learning Notes
+- Don't overcomplicate
+- Be more specific in requesting AI help
+- Making sure it adheres to Agile Principles is difficult (must keep reminding AI)
+- Reviewing the code with the commentary on reasoning is very helpful
+- 
+- I did NOT do the bonus sections as this was already a too large project for a 'static' webpage
+
+## Sprint 1 Summary & Next priorities
+
+- Recommended next work (Sprint 2 candidates):
+  1. Add automated, repeatable tests (Playwright/Cypress) that assert DOM/ARIA and CSV export contents.
+  2. Add unit tests for `src/qualify.js` logic (income thresholds, edge cases).
+  3. Improve test coverage for per-field blur handlers and reset behavior.
 
 ## Task 1 — Build accessible credit-application flow
 - Description: Implement a client-side credit application form with validation/qualification parity and income-based auto-approval (>= $20,000).
@@ -121,24 +136,6 @@ This document summarizes Sprint 1 tasks, what was implemented, current status, f
 
 ---
 
-## Sprint 1 Summary & Next priorities
-- Completed core client-side form, validation, qualification logic, UI for decisions, validation table and CSV export, and accessibility fixes.
-- Recommended next work (Sprint 2 candidates):
-  1. Add automated, repeatable tests (Playwright/Cypress) that assert DOM/ARIA and CSV export contents.
-  2. Add unit tests for `src/qualify.js` logic (income thresholds, edge cases).
-  3. Improve test coverage for per-field blur handlers and reset behavior.
-  4. Add JSDoc and small refactors to make `assets/js/apply-form.js` easier to test.
-
----
-
-If you'd like, I can now:
-- Add a small Playwright test suite for a subset of these scenarios (smoke + accessibility assertions), or
-- Create a manual QA checklist (spreadsheet/CSV) from the test cases we wrote.
-
-Tell me which follow-up you prefer and I'll add it to the todo list and start it.
-
----
-
 ## Task 13 — Code documentation (comments, JSDoc, and examples)
 - Description: Add documentation and inline comments to the JavaScript source (`assets/js/apply-form.js` and `src/qualify.js`) so other developers can quickly understand intent, inputs/outputs, and error modes.
 - Status: In progress (recommendations added below)
@@ -216,15 +213,11 @@ Tell me which follow-up you prefer and I'll add it to the todo list and start it
        - The main UI wiring (`assets/js/apply-form.js`)
        - How to run the app locally (open `apply.html`) and how to run any automated tests if added.
 
-- Example file-specific TODOs (low-effort wins):
-  - Add JSDoc to the top 10 functions in `assets/js/apply-form.js`.
-  - Add constants section to `src/qualify.js` documenting allowed thresholds.
-  - Add a brief `USAGE` example in `apply.html` or README showing how to trigger a valid/invalid submit for manual QA.
+
 
 ---
 
 Task 13 is added to the todo list as "in-progress". If you'd like, I can:
-- Apply the suggested JSDoc blocks directly to `assets/js/apply-form.js` and `src/qualify.js` (I can create a small patch adding the top-level module header and JSDoc to the most important functions).
 - Create a short `DEVELOPER_NOTES.md` with the same guidance and copy the examples into it.
 
 Which action should I take next? (I recommend adding the JSDoc blocks directly to `assets/js/apply-form.js` first.)
