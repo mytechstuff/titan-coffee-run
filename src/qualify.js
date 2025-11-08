@@ -278,4 +278,5 @@ export function validateAllFields(data = {}) {
     });
 
     // Keep no exports; this file is included as a plain script in apply.html.
-
+  
+    errors.push({ field: 'consent', message: 'You must consent to use information for credit application.' })
