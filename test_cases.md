@@ -6,7 +6,7 @@ Each test case includes: ID, Title, Objective, Steps, Test Data (where applicabl
 
 ---
 
-## Test Case 1 — Valid submit: income > $20,000 (Approved)
+## Test Case 1 — Valid submit: income > $20,000 (Approved) ==== PASS
 - ID: TC-01
 - Objective: Verify that a submission with all valid fields and gross income greater than $20,000 is accepted and shows an approval decision.
 - Steps:
@@ -34,7 +34,7 @@ Each test case includes: ID, Title, Objective, Steps, Test Data (where applicabl
 Results: Pass
 ---
 
-## Test Case 2 — Invalid submit: mismatched emails (Negative)
+## Test Case 2 — Invalid submit: mismatched emails (Negative) === PASS
 - ID: TC-02
 - Objective: Verify the form rejects submission when Email and Confirm Email do not match.
 - Steps:
@@ -54,7 +54,7 @@ Results: Pass
 Result: Pass
 ---
 
-## Test Case 3 — Valid submit: income below $20,000 (Declined)
+## Test Case 3 — Valid submit: income below $20,000 (Declined) === PASSED 
 - ID: TC-03
 - Objective: Verify that a submission with valid fields but gross income below the approval threshold results in a decline decision.
 - Steps:
@@ -81,7 +81,7 @@ Result: Pass
 
 ---
 
-## Test Case 4 — Missing consent (Negative)
+## Test Case 4 — Missing consent (Negative) === PASSED
 - ID: TC-04
 - Objective: Verify that the form requires explicit consent and blocks submission if not checked.
 - Steps:
@@ -98,10 +98,11 @@ Result: Pass
   - Form is not submitted and decision banner does not appear.
 - Priority: High
 - Notes: Consent is required for processing; verify the error is keyboard accessible.
+- Note 2: Passed means it correctly got the error and is int he validation list
 
 ---
 
-## Test Case 5 — Invalid SSN last 4 (Negative)
+## Test Case 5 — Invalid SSN last 4 (Negative) === PASSED
 - ID: TC-05
 - Objective: Verify SSN last-4 validation rejects non-numeric or incorrectly sized values.
 - Steps:
@@ -117,10 +118,10 @@ Result: Pass
   - The validation summary lists the SSN error on submit.
 - Priority: Medium
 - Notes: Acceptable SSN last-4 is 4 numeric digits only.
-
+- Note 2: It will NOT allow more the 4 digit input
 ---
 
-## Test Case 6 — Export CSV contains combined valid + invalid rows
+## Test Case 6 — Export CSV contains combined valid + invalid rows === PASSED
 - ID: TC-06
 - Objective: Verify the export behavior creates a CSV that includes both valid and invalid rows (the combined validation-results CSV).
 - Steps:
@@ -139,10 +140,10 @@ Result: Pass
   - The invalid field(s) contain the validation message in the value_or_message column.
 - Priority: Medium
 - Notes: This checks content correctness and that exported rows match the in-page table.
-
+- Notes 2: Validation_results.csv uploaded
 ---
 
-## Test Case 7 — Reset / Clear behavior and ARIA cleanup
+## Test Case 7 — Reset / Clear behavior and ARIA cleanup == PASSED
 - ID: TC-07
 - Objective: Verify that the native form Reset and the Clear Errors button remove inline errors, clear the validation-summary and table, and remove aria-describedby references so screen readers do not reference removed nodes.
 - Steps:
@@ -158,7 +159,7 @@ Result: Pass
 
 ---
 
-## Test Case 8 — Accessibility: inline errors & decision banner announcements
+## Test Case 8 — Accessibility: inline errors & decision banner announcements = PASSED
 - ID: TC-08
 - Objective: Confirm that inline errors are announced to assistive tech and the decision banner is announced and focusable briefly when shown.
 - Steps:

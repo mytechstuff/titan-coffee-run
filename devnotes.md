@@ -236,9 +236,4 @@ Place new notes under a new heading in this `devnotes.md` file, or add files und
 
 ---
 
-If you want, I can:
 
-- Add `aria-current` attributes to active dots and `aria-hidden` to hidden slides now.
-- Move runtime assets to `public/` and update the HTML references so Live Server and Pages have fewer path issues.
-
-Feel free to ask for either change and I'll make it and push a commit.

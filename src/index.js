@@ -3,6 +3,12 @@
 // - No external libraries (pure DOM + CSS)
 // - Injects a banner/carousel at the top of <main>
 //
+// Teaching & hosting note:
+// This project is a minimal, static-friendly demo intended for classroom use
+// and GitHub Pages hosting (no server required). The carousel below is kept
+// self-contained so students can drop the script into a static page and see
+// a working example without a build step.
+//
 // This file is organized by conceptual sections. Each section contains a short
 // explanation followed by the code that implements it. The goal is to make the
 // script approachable for students learning modern DOM programming and state

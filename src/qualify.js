@@ -1,33 +1,33 @@
 /*
   src/qualify.js
   ----------------
-  Purpose: provide reusable validation and income-based qualification helpers for
-  the credit application form. This file is written as a small ES module that
-  exports pure functions (no side-effects) so they are easy to unit-test and
-  reuse from form-handling code or server-side code (after small adaptation).
+  Current role (repository simplified for a class demo / static hosting):
 
-  Structure rationale:
-  - Export small, focused functions (isEmail, matchEmails, isSSNLast4, validateFields),
-    and a single `qualifyApplicant` function that applies income-based rules.
-  - Keep functions pure where possible (inputs -> outputs) so logic is deterministic
-    and testable. Avoid direct DOM access in this file; let form handler read DOM and
-    call these helpers.
-  - Configuration values (thresholds, multipliers) are centralized in `DEFAULTS` and
-    can be overridden by passing an options object to `qualifyApplicant`.
-  - Use named exports so callers can import only what they need.
+  This file intentionally contains two closely related concerns so the demo
+  remains tiny and easy for students to run from GitHub Pages (no server
+  required):
 
-  Usage (front-end):
+  1) Canonical validation & business-rule helpers (pure, named exports).
+     - These functions are meant to be deterministic and easy to unit-test.
+     - Examples: isEmail, matchEmails, isSSNLast4, validateFields, validateAllFields.
+
+  2) A very small page-facing wiring block used by `apply.html` to demonstrate
+     the rules in-browser. The DOM wiring is deliberately minimal (native
+     alert() for decisions, small summary area) to keep the example concise.
+
+  Rationale:
+  - A single-file demo lowers the barrier for students: clone -> open -> run.
+  - If you need a strict separation (pure logic vs UI), extract the exported
+    functions into a separate module (e.g., `src/qualify.core.js`) and have
+    the page script import that instead.
+
+  Usage (pure helpers):
     import { validateFields, qualifyApplicant } from './src/qualify.js';
     const errors = validateFields(formData);
-    if (!errors.length) {
-      const decision = qualifyApplicant(formData);
-    }
 
-  Note about script loading:
-  - This file is an ES module. To load it in the browser directly, include it with
-    <script type="module" src="/src/qualify.js"></script>
-  - If you want to keep a non-module <script> tag, create a thin module wrapper that
-    assigns these functions to window (or use a bundler).
+  Note: this file is an ES module (used via <script type="module">) but also
+  includes a tiny DOM wiring block for the static `apply.html` demo. Only the
+  exported helpers are intended for reuse; the DOM code is teaching-focused.
 */
 
 // Default configuration for qualification rules. Keep simple and configurable.
@@ -224,12 +224,22 @@ export function validateAllFields(data = {}) {
 
   // Consent checkbox must be true
   if (!data.consent) {
-    /**
-     * src/qualify.js (simplified)
-     * Lightweight script for a class assignment: validate that emails match and
-     * that gross income is over $20,000. This script wires the form in apply.html
-     * via a plain <script> include and keeps behavior intentionally minimal.
-     */
+  /**
+   * PAGE-WIRING (class demo)
+   * ------------------------
+   * The block below is intentionally small and opinionated for classroom use.
+   * It wires the DOM in `apply.html` to demonstrate the two simple checks
+   * used in the assignment: (1) emails match and (2) gross income > $20,000.
+   *
+   * Notes / rationale:
+   * - Keep UI code tiny so students can read and run the demo from a static
+   *   site (GitHub Pages) without extra tooling.
+   * - The decision display uses native alert() to avoid extra markup/ARIA
+   *   complexity in the teaching example. In production you'd render an
+   *   accessible banner or inline dialog instead.
+   * - If you want strictly separated concerns, extract the exported pure
+   *   helpers above into a separate module and import them here.
+   */
 
     function isEmail(v){ return !!v && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(v).trim()); }
 
@@ -277,6 +287,9 @@ export function validateAllFields(data = {}) {
       });
     });
 
-    // Keep no exports; this file is included as a plain script in apply.html.
+  // Keep no exports for the demo UI: this page-facing wiring runs when the
+  // DOM is ready and intentionally operates directly on elements in apply.html.
   
     errors.push({ field: 'consent', message: 'You must consent to use information for credit application.' })
+  }
+  return errors;}
