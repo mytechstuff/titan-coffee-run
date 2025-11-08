@@ -239,11 +239,12 @@ export function validateAllFields(data = {}) {
     }
 
     function showDecision(approved, income){
-      const el = document.getElementById('decision-result'); if(!el) return;
-      el.hidden = false; el.innerHTML = approved
-        ? `<div class="decision-banner decision-banner--approved"><strong>Approved</strong> — credit available</div>`
-        : `<div class="decision-banner decision-banner--declined"><strong>Declined</strong> — income below threshold</div>`;
-      el.focus?.();
+      // Minimal change: use native alert() popup instead of rendering the in-page banner.
+      // Keep the message short and include the income when approved.
+      const msg = approved
+        ? `Approved — credit available${income ? ' — $' + Number(income).toLocaleString() : ''}`
+        : 'Declined — income below threshold';
+      try { alert(msg); } catch (e) { /* fallback: do nothing if alerts are blocked */ }
     }
 
     document.addEventListener('DOMContentLoaded', ()=>{
