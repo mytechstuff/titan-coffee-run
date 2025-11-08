@@ -224,141 +224,57 @@ export function validateAllFields(data = {}) {
 
   // Consent checkbox must be true
   if (!data.consent) {
-    errors.push({ field: 'consent', message: 'You must consent to use information for credit application.' });
-  }
+    /**
+     * src/qualify.js (simplified)
+     * Lightweight script for a class assignment: validate that emails match and
+     * that gross income is over $20,000. This script wires the form in apply.html
+     * via a plain <script> include and keeps behavior intentionally minimal.
+     */
 
-  return errors;
-}
+    function isEmail(v){ return !!v && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(v).trim()); }
 
-// ------------------- Qualification logic -------------------
-
-/**
- * Determine credit eligibility and amount based on income and configurable rules.
- * Returns an object: { decision: 'approved'|'declined', creditAmount: number|null, reason?: string }
- * Keep the logic simple and deterministic to make testing straightforward.
- */
-/**
- * Determine credit eligibility and amount based on income and configurable rules.
- * Returns an object: { decision: 'approved'|'declined', creditAmount: number|null, reason?: string }
- * Keep the logic simple and deterministic to make testing straightforward.
- * @param {Object} data
- * @param {Object} [options]
- * @returns {{decision:string, creditAmount:number|null, reason?:string}}
- */
-export function qualifyApplicant(data = {}, options = {}) {
-  const cfg = { ...DEFAULTS, ...options };
-
-  const income = Number(data.grossIncome) || 0;
-
-  // If income is below the minimum for consideration, decline right away
-  if (income < cfg.minIncomeForConsideration) {
-    return { decision: 'declined', creditAmount: null, reason: 'income_below_minimum' };
-  }
-
-  // Explicit auto-approve rule: if income meets or exceeds minApprovalIncome,
-  // grant approval and compute credit using the same factor/cap logic below.
-  const shouldAutoApprove = income >= cfg.minApprovalIncome;
-
-  // calculate base credit as fraction of income
-  let credit = Math.floor(income * cfg.incomeCreditFactor);
-
-  // apply cap
-  if (credit > cfg.maxCreditCap) credit = cfg.maxCreditCap;
-
-  // optional: if user provided requestedAmount, honor up to computed credit
-  if (data.requestedAmount) {
-    const requested = Number(data.requestedAmount);
-    if (Number.isFinite(requested) && requested >= 0) {
-      credit = Math.min(credit, Math.floor(requested));
+    function showSummary(msgs){
+      const s = document.getElementById('validation-summary');
+      if(!s) return; s.hidden = !msgs.length; s.innerHTML = msgs.length ? '<ul>'+msgs.map(m=>'<li>'+m+'</li>').join('')+'</ul>' : '';
     }
-  }
 
-  // final check: if credit is zero, decline
-  if (credit <= 0) {
-    return { decision: 'declined', creditAmount: null, reason: 'computed_credit_zero' };
-  }
+    function showDecision(approved, income){
+      const el = document.getElementById('decision-result'); if(!el) return;
+      el.hidden = false; el.innerHTML = approved
+        ? `<div class="decision-banner decision-banner--approved"><strong>Approved</strong> — credit available</div>`
+        : `<div class="decision-banner decision-banner--declined"><strong>Declined</strong> — income below threshold</div>`;
+      el.focus?.();
+    }
 
-  // If auto-approve applies, return approved. Otherwise follow the same
-  // approval path (we already computed credit above and applied caps/requests).
-  if (shouldAutoApprove) {
-    return { decision: 'approved', creditAmount: credit, reason: 'auto_approved_by_income' };
-  }
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const form = document.getElementById('credit-application-form');
+      if(!form) return;
+      form.addEventListener('submit', (ev)=>{
+        ev.preventDefault();
+        const email = (form.querySelector('#email')||{}).value||'';
+        const emailConfirm = (form.querySelector('#emailConfirm')||{}).value||'';
+        const incomeRaw = (form.querySelector('#grossIncome')||{}).value||'';
+        const income = Number(incomeRaw) || 0;
 
-  return { decision: 'approved', creditAmount: credit };
-}
+        const errors = [];
+        if(!isEmail(email)) errors.push('Enter a valid email address.');
+        if(email.trim().toLowerCase() !== emailConfirm.trim().toLowerCase()) errors.push('Email addresses do not match.');
+        if(!(income > 20000)) errors.push('Gross income must be greater than $20,000 to auto-approve.');
 
-// ------------------- Export a small helper for convenience ---------------
+        showSummary(errors);
+        document.getElementById('errors-table')?.querySelector('tbody')?.replaceChildren();
+        document.getElementById('decision-result').hidden = true;
 
-/**
- * validateAndQualify(data, options)
- * - returns { errors: [], decision?, creditAmount?, reason? }
- * This combines validation + qualification and is useful for quick flows.
- */
-export function validateAndQualify(data = {}, options = {}) {
-  const errors = validateFields(data);
-  if (errors.length) return { errors };
-  const decision = qualifyApplicant(data, options);
-  return { errors: [], ...decision };
-}
+        if(errors.length) return;
+        // Simple approve/decline: income > 20k -> approved
+        showDecision(true, income);
+      });
 
-// ------------------- Per-field validation helper -------------------
-/**
- * validateField(field, data)
- * Validate a single field using the provided data object (so cross-field checks work).
- * Returns null when valid, or an error object { field, message } when invalid.
- * @param {string} field
- * @param {Object} [data]
- * @returns {{field:string,message:string}|null}
- */
-export function validateField(field, data = {}) {
-  switch (field) {
-    case 'email':
-      if (!isEmail(data.email)) return { field, message: 'Enter a valid email address.' };
-      return null;
-    case 'emailConfirm':
-      if (!matchEmails(data.email, data.emailConfirm)) return { field, message: 'Email addresses do not match.' };
-      return null;
-    case 'firstName':
-      if (!data.firstName || String(data.firstName).trim() === '') return { field, message: 'First name is required.' };
-      return null;
-    case 'lastName':
-      if (!data.lastName || String(data.lastName).trim() === '') return { field, message: 'Last name is required.' };
-      return null;
-    case 'city':
-      if (!data.city || String(data.city).trim() === '') return { field, message: 'City is required.' };
-      return null;
-    case 'state':
-      if (!isValidState(data.state)) return { field, message: 'Enter a valid 2-letter state code.' };
-      return null;
-    case 'zip':
-      if (!/^\d{5}$/.test(String(data.zip || '').trim())) return { field, message: 'ZIP code must be 5 digits.' };
-      return null;
-    case 'grossIncome':
-      if (data.grossIncome === undefined || data.grossIncome === '' || !isNonNegativeNumber(data.grossIncome) || Number(data.grossIncome) <= 0) return { field, message: 'Gross income must be a positive number.' };
-      return null;
-    case 'ssnLast4':
-      if (!isSSNLast4(data.ssnLast4)) return { field, message: 'Enter the last 4 digits of your SSN.' };
-      return null;
-    case 'consent':
-      if (!data.consent) return { field, message: 'You must consent to use information for credit application.' };
-      return null;
-    default:
-      return null;
-  }
-}
+      form.addEventListener('reset', ()=>{
+        showSummary([]); document.getElementById('decision-result').hidden = true;
+        document.getElementById('errors-table')?.querySelector('tbody')?.replaceChildren();
+      });
+    });
 
-// ------------------- Notes on local vs global variables -------------------
-/*
-  - Prefer local variables (inside functions) and module scope constants like DEFAULTS.
-    These avoid polluting the global namespace and make the code testable.
-  - Avoid putting mutable data on window/global; if you must provide a global API,
-    export it from this module and attach to window in a separate thin wrapper.
-  - Local variables are garbage-collected when out of scope; globals persist and can cause
-    accidental collisions and harder-to-track bugs.
-*/
+    // Keep no exports; this file is included as a plain script in apply.html.
 
-// Optional: if the script is included non-modularly and you want a fallback global
-// export, uncomment the following lines. Prefer using `type="module"` in the page.
-// if (typeof window !== 'undefined') {
-//   window.__titanQualify = { isEmail, matchEmails, isSSNLast4, validateFields, qualifyApplicant, validateAndQualify };
-// }

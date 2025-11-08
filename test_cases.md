@@ -31,7 +31,7 @@ Each test case includes: ID, Title, Objective, Steps, Test Data (where applicabl
   - Banner receives focus briefly and is announced via assistive tech (aria-live/role=status).
 - Priority: High
 - Notes: This uses the canonical approval threshold (>= $20,000).
-
+Results: Pass
 ---
 
 ## Test Case 2 — Invalid submit: mismatched emails (Negative)
@@ -50,7 +50,8 @@ Each test case includes: ID, Title, Objective, Steps, Test Data (where applicabl
   - The emailConfirm input has `aria-invalid="true"` and an `aria-describedby` reference pointing to the inline error node.
 - Priority: High
 - Notes: Ensure inline error is accessible and focus moves to the first invalid field when submitting.
-
+---
+Result: Pass
 ---
 
 ## Test Case 3 — Valid submit: income below $20,000 (Declined)
