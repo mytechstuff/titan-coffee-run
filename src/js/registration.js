@@ -1,5 +1,6 @@
 // registration.js — ES module
 // Exports FormValidator and StorageManager and initializes form behavior on DOMContentLoaded
+import { User, UserStorage } from './userStorage.js';
 
 /*
   Developer notes — review suggestions status
@@ -270,12 +271,30 @@ export class FormValidator {
         // simulate network delay for demo
         setTimeout(()=>{
           if (this.registerBtn) this.registerBtn.classList.remove('loading');
-          if (this.formStatus) this.formStatus.textContent = 'Registration successful (demo) — check your email to confirm.';
+          // Before clearing the form, persist a safe user record (no plain password).
+          try{
+            const first = this.form.querySelector('#firstName') ? this.form.querySelector('#firstName').value.trim() : '';
+            const last = this.form.querySelector('#lastName') ? this.form.querySelector('#lastName').value.trim() : '';
+            const email = this.form.querySelector('#email') ? this.form.querySelector('#email').value.trim() : '';
+            // We set passwordSet=true to indicate a password was created without storing it
+            const user = new User({ firstName: first, lastName: last, email, passwordSet: true });
+            const saved = UserStorage.save(user, { encode: true, expirationDays: 31 });
+            if (saved) {
+              if (this.formStatus) this.formStatus.textContent = 'Registration successful (demo) — data saved locally.';
+            } else {
+              if (this.formStatus) this.formStatus.textContent = 'Registration successful (demo) — failed to save locally.';
+            }
+          }catch(err){
+            console.warn('Error saving user after registration', err);
+            if (this.formStatus) this.formStatus.textContent = 'Registration successful (demo) — error saving local copy.';
+          }
+
+          // Reset UX
           this.form.reset();
           if (this.strengthBar) this.strengthBar.style.width = '0%';
           if (this.pwdStrengthLabel) this.pwdStrengthLabel.textContent = '—';
           this._toggleSubmit(false);
-          // storage clear is handled outside if needed
+          // storage clear is handled outside if needed (draft clearing)
           const event = new CustomEvent('registration:success');
           this.form.dispatchEvent(event);
         }, 800);
@@ -344,6 +363,73 @@ export default function initRegistration(){
 
     // Clear storage on successful registration
     form.addEventListener('registration:success', ()=> storage.clearDraft());
+
+    // Backup / Restore UI integration using UserStorage
+    const backupBtn = document.getElementById('backupBtn');
+    const restoreBtn = document.getElementById('restoreBtn');
+    const restoreInput = document.getElementById('restoreInput');
+
+    const backupStatus = document.getElementById('backupStatus');
+    if (backupBtn){
+      backupBtn.addEventListener('click', async ()=>{
+        try{
+          const result = UserStorage.backup();
+          if (!result){
+            if (backupStatus) backupStatus.textContent = 'No stored user data to backup.';
+            return;
+          }
+          // result { backupString, fileName }
+          const { backupString, fileName } = result;
+          const blob = new Blob([backupString], { type: 'application/octet-stream' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName || 'tcr_user_backup.tcrbak';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          if (backupStatus) backupStatus.textContent = `Backup downloaded: ${a.download}`;
+          // small success state (clear after a few seconds)
+          setTimeout(()=>{ if (backupStatus) backupStatus.textContent = '' }, 6000);
+        }catch(err){
+          console.error('Backup failed', err);
+          if (backupStatus) backupStatus.textContent = 'Backup failed — see console for details.';
+        }
+      });
+    }
+
+    if (restoreBtn && restoreInput){
+      restoreBtn.addEventListener('click', ()=> restoreInput.click());
+      restoreInput.addEventListener('change', (e)=>{
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = ()=>{
+          const text = reader.result;
+          const ok = UserStorage.restore(text);
+          if (ok){
+            const { user } = UserStorage.load();
+            if (user){
+              if (form.querySelector('#firstName')) form.querySelector('#firstName').value = user.firstName || '';
+              if (form.querySelector('#lastName')) form.querySelector('#lastName').value = user.lastName || '';
+              if (form.querySelector('#email')) form.querySelector('#email').value = user.email || '';
+              if (form.querySelector('#terms')) form.querySelector('#terms').checked = true;
+              validator.isFormValid();
+              if (backupStatus) backupStatus.textContent = 'Restore successful — form prefilled from backup.';
+            } else {
+              if (backupStatus) backupStatus.textContent = 'Restore completed but no user found in storage.';
+            }
+            setTimeout(()=>{ if (backupStatus) backupStatus.textContent = '' }, 6000);
+          } else {
+            if (backupStatus) backupStatus.textContent = 'Restore failed — invalid backup file.';
+          }
+        };
+        reader.readAsText(f);
+        // reset input so same file can be selected again later
+        restoreInput.value = '';
+      });
+    }
   });
 }
 
