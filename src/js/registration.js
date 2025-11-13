@@ -258,7 +258,7 @@ export class FormValidator {
     if (this.terms) this.terms.addEventListener('change', ()=> this.isFormValid());
 
     if (this.form){
-      this.form.addEventListener('submit', (e)=>{
+      this.form.addEventListener('submit', async (e)=>{
         e.preventDefault();
         if (this.formStatus) this.formStatus.textContent = '';
         if (!this.isFormValid()){
@@ -269,35 +269,34 @@ export class FormValidator {
         if (this.registerBtn) this.registerBtn.classList.add('loading');
         if (this.registerBtn) this.registerBtn.disabled = true;
         // simulate network delay for demo
-        setTimeout(()=>{
-          if (this.registerBtn) this.registerBtn.classList.remove('loading');
-          // Before clearing the form, persist a safe user record (no plain password).
-          try{
-            const first = this.form.querySelector('#firstName') ? this.form.querySelector('#firstName').value.trim() : '';
-            const last = this.form.querySelector('#lastName') ? this.form.querySelector('#lastName').value.trim() : '';
-            const email = this.form.querySelector('#email') ? this.form.querySelector('#email').value.trim() : '';
-            // We set passwordSet=true to indicate a password was created without storing it
-            const user = new User({ firstName: first, lastName: last, email, passwordSet: true });
-            const saved = UserStorage.save(user, { encode: true, expirationDays: 31 });
-            if (saved) {
-              if (this.formStatus) this.formStatus.textContent = 'Registration successful (demo) — data saved locally.';
-            } else {
-              if (this.formStatus) this.formStatus.textContent = 'Registration successful (demo) — failed to save locally.';
-            }
-          }catch(err){
-            console.warn('Error saving user after registration', err);
-            if (this.formStatus) this.formStatus.textContent = 'Registration successful (demo) — error saving local copy.';
+        await new Promise(resolve => setTimeout(resolve, 800));
+        if (this.registerBtn) this.registerBtn.classList.remove('loading');
+        // Before clearing the form, persist a safe user record (no plain password).
+        try{
+          const first = this.form.querySelector('#firstName') ? this.form.querySelector('#firstName').value.trim() : '';
+          const last = this.form.querySelector('#lastName') ? this.form.querySelector('#lastName').value.trim() : '';
+          const email = this.form.querySelector('#email') ? this.form.querySelector('#email').value.trim() : '';
+          // We set passwordSet=true to indicate a password was created without storing it
+          const user = new User({ firstName: first, lastName: last, email, passwordSet: true });
+          const saved = await UserStorage.save(user, { encode: true, expirationDays: 31 });
+          if (saved) {
+            if (this.formStatus) this.formStatus.textContent = 'Registration successful (demo) — data saved locally.';
+          } else {
+            if (this.formStatus) this.formStatus.textContent = 'Registration successful (demo) — failed to save locally (device may be low on storage).';
           }
+        }catch(err){
+          console.warn('Error saving user after registration', err);
+          if (this.formStatus) this.formStatus.textContent = 'Registration successful (demo) — error saving local copy.';
+        }
 
-          // Reset UX
-          this.form.reset();
-          if (this.strengthBar) this.strengthBar.style.width = '0%';
-          if (this.pwdStrengthLabel) this.pwdStrengthLabel.textContent = '—';
-          this._toggleSubmit(false);
-          // storage clear is handled outside if needed (draft clearing)
-          const event = new CustomEvent('registration:success');
-          this.form.dispatchEvent(event);
-        }, 800);
+        // Reset UX
+        this.form.reset();
+        if (this.strengthBar) this.strengthBar.style.width = '0%';
+        if (this.pwdStrengthLabel) this.pwdStrengthLabel.textContent = '—';
+        this._toggleSubmit(false);
+        // storage clear is handled outside if needed (draft clearing)
+        const event = new CustomEvent('registration:success');
+        this.form.dispatchEvent(event);
       });
     }
   }

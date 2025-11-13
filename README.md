@@ -1,35 +1,82 @@
 # Titan Coffee Run
 
-Small static demo for a client-side credit application form. Intended for teaching
-and quick demos — runs entirely in the browser when hosted on GitHub Pages.
+
+Tools Used: VS Code CoPilot
+Google Gemini
+
+Percentage estimate: 85-90% AI code, but tested and reviewed.  Personal notations were made in several files. 
+
+Lightweight demo site and teaching scaffold for a small client-side application (forms, storage, and simple auth demos).
+
+Status (current)
+- Branch: `work/save-local-20251112-2036`
+- Last update: 2025-11-12
+- This repo is primarily a static front-end demo with an optional local dev server used for testing authentication flows.
+- Several client-side demo modules were added: onboarding/registration, a versioned local storage user model, a demo SessionManager, a client-side rate-limiter, and a dev-server scaffold for testing password-history checks.
 
 Quick start
-1. Open the repo in your editor.
-2. No build step required — just open `apply.html` in a browser or publish with GitHub Pages.
 
-What’s included
-- `apply.html` — the credit application form UI.
-- `src/qualify.js` — compact client-side validation + decision logic (module).
-- `src/styles/` — minimal layout and form styles.
+1. Static preview (no server): open pages in a browser (some ES modules require HTTP).
+   - Open `index.html`, `apply.html`, `login.html`, or `register.html` directly for quick static previews.
+2. Local dev server (demo auth features):
 
+```powershell
+cd "c:\Users\mikec\Titan Coffee Run\dev-server"
+npm install
+# optional: set secrets for demo behavior
+# $env:JWT_SECRET = 'dev-secret-please-change'
+# $env:SERVER_PEPPER = 'replace-with-secure-pepper'
+npm start
+```
 
-Notes about hosting
-- This repo is configured as a static site (GitHub Pages). There is no server-side
-	code required for the demo. If you need persistence or an API, host a separate
-	backend and call it from the client.
+Files and notable modules
 
-Repository notes
-- The local Express dev server (`server/index.js`) and the GitHub Actions workflow
-  were removed to keep the repo minimal for static hosting. If you need the
-  server or CI later I can restore them or add a lightweight replacement.
+- Top-level pages:
+  - `index.html`, `apply.html`, `login.html`, `register.html`, `menu.html`, `protected.html`
+- Source (client JS): `src/`
+  - `src/index.js` — carousel and root script
+  - `src/qualify.js` — form validation and demo wiring for `apply.html`
+  - `src/js/userStorage.js` — versioned user model, storage helpers, backup/restore
+  - `src/js/registration.js` — registration form wiring
+  - `src/js/login.js` — login wiring and demo token flow
+  - `src/js/loginRateLimiter.js` — client-side rate-limiter (UX layer)
+  - `src/js/sessionManager.js` — centralized demo token handling
+- Dev server: `dev-server/`
+  - `dev-server/server.js` — small Express demo server (issues JWTs, added password-history demo endpoints)
+  - `dev-server/package.json` — includes `express`, `jsonwebtoken`, and `argon2` for the demo
+- Documentation and notes:
+  - `devnotes.md` — developer notes, architecture rationale, and change-log
+  - `securty_review.md` — security review and guidance (password history, reset flows)
+  - `secure_optios.md` — duplicate pointer (typo file)
 
-Enabling GitHub Pages
-- To publish the site manually: go to your repository Settings → Pages, choose
-  the `main` branch and `/ (root)` as the publish source, then save. The site
-  will be available at `https://<your-username>.github.io/<repo-name>/`.
+Security / important warnings
 
-License / Next steps
-- Small, focused demo. If you want I can add a short automated deploy workflow
-  that publishes the site to GitHub Pages (I can add that on request).
+- This project contains multiple client-side demo implementations of auth and storage. These are deliberately educational and are NOT production-ready:
+  - Demo tokens are unsigned Base64 tokens in the client by default — do not use for real auth.
+  - Sensitive data such as passwords or PII must not be stored in localStorage in production. See `securty_review.md` for guidance.
+  - The `dev-server` includes an in-memory password-history demo using Argon2 for testing only; it is not persistent and is for local development.
 
-Enjoy the demo — open `apply.html` to try the simplified application flow.
+Flow diagrams and collaboration
+
+- For flowcharts I recommend using `mermaid` for repo-contained diagrams (text-based), or `diagrams.net` / `Lucidchart` for visual diagrams. See `devnotes.md` for suggested Mermaid snippets.
+
+Tooling and editor notes
+
+- Recommended editor: Visual Studio Code.
+- GitHub Copilot / VS Code Copilot note: the workspace was developed with assistance from GitHub Copilot (integration). When asked about the model used in assistant responses, the agent reports `GPT-5 mini` as the assisting model.
+
+How you can help / next steps
+
+- If you want production-grade auth, I can:
+  - Add server-side signed JWT flows and HttpOnly cookies.
+  - Add server-side rate-limiting and persistent password-history storage.
+  - Replace demo Base64 token flows with proper server-issued tokens.
+- For the demo, I can also add a small Mermaid flowchart into `securty_review.md` to visualize the password-reset flow.
+
+Contact / notes
+
+Open an issue or tell me which of the next steps you'd like me to implement: add tests, harden the dev-server, or produce diagrams and client validators.
+
+---
+
+_This README was updated automatically to reflect the current workspace state._

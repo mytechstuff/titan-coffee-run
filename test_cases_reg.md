@@ -2,15 +2,15 @@
 
 > Summary checklist (quick)
 
-- [ ] Invalid email "test@" displays an error and keeps Register disabled (P0)
-- [ ] Password of only spaces is rejected (P0)
-- [ ] Confirm password mismatch blocks submit (P0)
-- [ ] Terms unchecked blocks submit (P0)
-- [ ] Attempted SQL injection strings are treated as text; document the client payload (P0)
+- [x ] Invalid email "test@" displays an error and keeps Register disabled (P0)
+- [x ] Password of only spaces is rejected (P0)
+- [x ] Confirm password mismatch blocks submit (P0)
+- [x ] Terms unchecked blocks submit (P0)
+- [  ] Attempted SQL injection strings are treated as text; document the client payload (P0)
 - [ ] XSS strings are not executed; ensure any rendering escapes HTML (P0)
 - [ ] Draft persistence restores name/email/terms but not password (P2)
-- [ ] Focus moves to first invalid field on submit (P1)
-- [ ] aria-live messages announced on validation changes (P0)
+- [x ] Focus moves to first invalid field on submit (P1)
+- [x ] aria-live messages announced on validation changes (P0)
 
 Note: an X in the checkbox indicates the test PASSED.
 

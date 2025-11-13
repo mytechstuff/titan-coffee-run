@@ -27,6 +27,92 @@ function base64Decode(b64) {
 }
 
 /**
+ * Detect quota-exceeded errors across browsers/APIs.
+ * Returns true when the thrown error indicates storage quota was reached.
+ */
+export function isQuotaExceededError(err) {
+  if (!err) return false;
+  const name = err.name || '';
+  if (name === 'QuotaExceededError' || name === 'QuotaExceededErr') return true;
+  if (name === 'NS_ERROR_DOM_QUOTA_REACHED') return true;
+  // older code values
+  if (err.code === 22 || err.code === 1014) return true;
+  const msg = String(err).toLowerCase();
+  if (msg.includes('quota') || msg.includes('quotaexceeded') || msg.includes('quota exceeded')) return true;
+  return false;
+}
+
+/**
+ * Use the StorageManager estimate API to check approximate free quota before writing.
+ * Returns true if the write of `bytesToWrite` would likely exceed quota.
+ */
+export async function willExceedQuotaApprox(bytesToWrite) {
+  if (navigator.storage && typeof navigator.storage.estimate === 'function') {
+    try {
+      const { quota, usage } = await navigator.storage.estimate();
+      if (typeof quota === 'number' && typeof usage === 'number') {
+        return (usage + bytesToWrite) > quota;
+      }
+    } catch (e) {
+      // ignore and fall back to try/catch write
+    }
+  }
+  return false;
+}
+
+// Helper to prompt a user download for a backup blob (called when writes cannot complete)
+function promptDownloadBackup(text, suggestedName = 'tcr_user_backup.json') {
+  try {
+    const blob = new Blob([text], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = suggestedName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error('promptDownloadBackup failed', e);
+  }
+}
+
+/**
+ * Demo wrappers for "encrypting" and "decrypting" payloads.
+ *
+ * IMPORTANT: These functions perform Base64 encoding/decoding only. Base64 is NOT
+ * encryption and should not be treated as secure. These wrappers exist to provide a
+ * clear, self-documenting API for demo/educational flows where consumers expect
+ * encrypt/decrypt function names.
+ *
+ * Use these for demos only. For any production-sensitive data, use Web Crypto APIs
+ * (AES-GCM, proper key derivation) and robust server-side storage/validation.
+ *
+ * @param {string} plaintext - UTF-8 string to encode.
+ * @returns {string} Base64-encoded representation of the input.
+ */
+export function encryptDemo(plaintext) {
+  if (typeof plaintext !== 'string') plaintext = String(plaintext || '');
+  return base64Encode(plaintext);
+}
+
+/**
+ * Demo decrypt wrapper matching `encryptDemo`.
+ *
+ * @param {string} ciphertext - Base64 string produced by `encryptDemo`.
+ * @returns {string} Decoded UTF-8 plaintext.
+ */
+export function decryptDemo(ciphertext) {
+  if (!ciphertext) return '';
+  try{
+    return base64Decode(String(ciphertext));
+  }catch(e){
+    console.warn('decryptDemo: failed to decode input', e);
+    return '';
+  }
+}
+
+/**
  * Minimal email validator used for client-side validation only.
  */
 function isValidEmail(email) {
@@ -191,14 +277,43 @@ export class UserStorage {
    */
   static save(user, options = { key: STORAGE_KEY_DEFAULT, encode: true, expirationDays: 30 }) {
     if (!(user instanceof User)) throw new Error('save expects a User instance');
-    const json = user.toJSON({ encode: options.encode, expirationDays: options.expirationDays });
-    try {
-      localStorage.setItem(options.key, json);
-      return true;
-    } catch (err) {
-      console.error('UserStorage.save: failed to save to localStorage', err);
-      return false;
-    }
+    // async save to allow StorageManager estimate checks and better quota handling
+    return (async () => {
+      const json = user.toJSON({ encode: options.encode, expirationDays: options.expirationDays });
+      // estimate bytes for the payload
+      let bytes = null;
+      try { bytes = new Blob([json]).size; } catch(e) { bytes = null; }
+
+      // pre-check approximate quota
+      if (bytes !== null) {
+        try {
+          const likely = await willExceedQuotaApprox(bytes);
+          if (likely) {
+            console.warn('UserStorage.save: quota likely exceeded (pre-check)');
+            // prompt user to download a backup before we bail
+            promptDownloadBackup(json, `tcr_user_backup_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.json`);
+            return false;
+          }
+        } catch (e) {
+          // ignore pre-check failures and fall back to try/catch write
+        }
+      }
+
+      try {
+        localStorage.setItem(options.key, json);
+        return true;
+      } catch (err) {
+        console.error('UserStorage.save: failed to save to localStorage', err);
+        if (isQuotaExceededError(err)) {
+          // Prompt a backup download so user doesn't lose data
+          try {
+            promptDownloadBackup(json, `tcr_user_backup_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.json`);
+          } catch (e) { /* ignore */ }
+          return false;
+        }
+        return false;
+      }
+    })();
   }
 
   /**
@@ -287,3 +402,8 @@ export const DEFAULTS = {
   STORAGE_KEY_DEFAULT,
   CURRENT_VERSION,
 };
+
+// in page context (same code as module)
+const json = JSON.stringify({hello:'world'});
+const b64 = btoa(unescape(encodeURIComponent(json))); // same as base64Encode
+console.log(b64);

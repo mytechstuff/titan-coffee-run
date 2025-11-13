@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Protected — Titan Coffee Run (Demo)</title>
+  <link rel="stylesheet" href="./src/styles/main.css">
+</head>
+<body>
+  <main>
+    <h1>Protected Page (Demo)</h1>
+    <p>This page requires login. If you see this, authentication succeeded.</p>
+    <p><a id="logout" href="#">Sign out</a></p>
+  </main>
+  <script type="module">
+    import SessionManager from './src/js/sessionManager.js';
+    (function(){
+      const sm = new SessionManager();
+      const t = sm.getToken();
+      if (!t) {
+        // store intended and redirect to login
+        sessionStorage.setItem('intended', location.pathname + location.search);
+        location.replace('login.html');
+        return;
+      }
+      document.getElementById('logout').addEventListener('click', (e)=>{
+        e.preventDefault();
+        sm.clearToken();
+        location.replace('login.html');
+      });
+    })();
+  </script>
+</body>
+</html>
