@@ -25,20 +25,24 @@
         screens. It's marked up with a <header> element for semantic clarity and to help
         screen readers and search engines understand document structure.
     -->
-    <header>
-        <div class="brand">
+    <header role="banner">
+        <!-- Brand is a link to the homepage so it is keyboard-focusable and announced as a landmark */ -->
+        <a href="/" class="brand" aria-label="Titan Coffee Run home">
             <div class="logo">T</div>
             <div>
                 <div style="font-weight:800">Titan Coffee Run</div>
                 <div style="font-size:.85rem;color:var(--muted)">Fresh. Fast. Friendly.</div>
             </div>
-        </div>
-        <nav aria-label="Primary navigation">
+        </a>
+        <nav role="navigation" aria-label="Primary navigation">
             <a href="#" aria-current="page">Home</a>
             <a href="#">Menu</a>
             <a href="#">Locations</a>
             <a href="#">Contact</a>
             <a href="apply.html" class="nav-cta">Apply for Credit</a>
+            <!-- Authentication links (placeholder pages) -->
+            <a href="/login.html" class="nav-link nav-login" aria-label="Sign in to your account">Login</a>
+            <a href="/register.html" class="nav-link nav-register" aria-label="Create a new account">Sign up</a>
         </nav>
     </header>
 
