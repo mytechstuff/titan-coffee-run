@@ -30,6 +30,7 @@ body{
 /* Accessibility helpers */
 .skip-link{position:absolute;left:-999px;top:auto;width:1px;height:1px;overflow:hidden}
 .skip-link:focus{position:static;width:auto;height:auto;background:var(--accent);color:#fff;padding:.5rem 1rem;z-index:1000;border-radius:6px}
+.skip-link:focus{outline:3px solid rgba(0,0,0,0.08)}
 .sr-only{border:0;clip:rect(0 0 0 0);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px}
 header{
     display:flex;
@@ -50,8 +51,19 @@ header{
     display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.1rem;
     box-shadow:0 4px 12px rgba(86,45,20,.12);
 }
+/* navigation links and newly added auth links */
 nav a{margin-left:1rem;color:var(--muted);text-decoration:none;font-weight:600}
 nav a:hover{color:var(--accent)}
+
+/* clearly visible focus styles for keyboard users */
+nav a:focus, a:focus, button:focus{outline:none}
+/* use the :focus-visible pseudo-class when available */
+:focus-visible{outline:3px solid rgba(79,70,229,0.18);outline-offset:2px;border-radius:6px}
+
+/* auth links get slightly different treatment to separate from primary nav */
+.nav-login{background:transparent;border-radius:6px;padding:.35rem .6rem}
+.nav-register{background:var(--accent);color:#fff;border-radius:6px;padding:.35rem .6rem;margin-left:.5rem}
+.nav-register:focus-visible{outline:3px solid rgba(255,255,255,0.18);box-shadow:0 2px 6px rgba(86,45,20,0.12)}
 main{max-width:980px;margin:2rem auto;padding:0 1rem}
 .hero{
     display:grid;
