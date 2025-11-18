@@ -38,6 +38,21 @@
 
     <div id="chart-container" class="chart-box" aria-live="polite" aria-label="Sales chart container">
       <!-- SVG placeholder for sales graph -->
+      <!--
+         Documentation (quick):
+         - To provide data from the page, set `window.salesData` BEFORE loading the module, for example:
+             <script>
+               window.salesData = [
+                 { quarter: 'Jan–Mar', amount: 2005.00 },
+                 { quarter: 'Apr–Jun', amount: 1471.31 },
+                 { quarter: 'Jul–Sep', amount: 892.86 },
+                 { quarter: 'Oct–Dec', amount: 531.60 }
+               ];
+             </script>
+         - Then include the module: <script type="module" src="./src/js/sales-graph.js"></script>
+         - Or call `window.updateSalesData(newArray)` later with the same object shape.
+         - Variables you may want to change are documented in `src/js/sales-graph.js` (svgHeight, margins, barWidth, barPadding).
+      -->
       <svg id="chart-area" role="img" aria-label="Sales bar chart" style="width:100%;height:300px"></svg>
     </div>
 

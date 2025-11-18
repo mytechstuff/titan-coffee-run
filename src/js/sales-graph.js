@@ -16,6 +16,29 @@ let chartData = (window.salesData && Array.isArray(window.salesData) && window.s
   : DEFAULT_SALES.slice();
 
 // Layout: reserve margins for axis labels
+/*
+  sales-graph.js
+
+  Overview for new JS students:
+  - This module renders a simple SVG bar chart into the page element with id `chart-area`.
+  - The chart reads `window.salesData` if provided (array of objects { quarter, amount }).
+  - If no data is provided, it falls back to `DEFAULT_SALES` defined below.
+
+  Key variables you may change:
+  - DEFAULT_SALES: change default quarter names and amounts.
+  - svgHeight: total SVG height in pixels.
+  - marginTop/marginBottom/marginLeft/marginRight: space reserved for labels.
+  - barWidth: width of each bar. Increasing this makes the chart wider.
+  - barPadding: space between bars.
+
+  Where to place data:
+  - Put `window.salesData = [{ quarter: 'Jan–Mar', amount: 2005.00 }, ...];` in the page *before* the
+    module is loaded (i.e. before the `<script type="module" src="./src/js/sales-graph.js"></script>` tag).
+  - Or call `window.updateSalesData(array)` later to update the chart programmatically.
+
+  This file intentionally keeps logic simple and vanilla so students can read and modify easily.
+*/
+
 const svgHeight = 360;
 const marginTop = 20;
 const marginBottom = 48; // space for x-axis labels
@@ -41,8 +64,11 @@ function createBarChart(data, svgHeight, chartHeight) {
   // Clear any existing content
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
-  const barWidth = 40; // fixed bar width
-  const barPadding = 16; // space between bars
+  // Increase barWidth by 50% to make the chart wider as requested.
+  // Original values were: barWidth = 40, barPadding = 16
+  // 50% wider -> multiply by 1.5
+  const barWidth = Math.round(40 * 1.5); // 60
+  const barPadding = Math.round(16 * 1.5); // 24
   const totalWidth = marginLeft + data.length * barWidth + (data.length - 1) * barPadding + marginRight;
   svg.setAttribute('viewBox', `0 0 ${totalWidth} ${svgHeight}`);
   svg.setAttribute('height', svgHeight);
