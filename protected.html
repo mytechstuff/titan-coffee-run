@@ -13,22 +13,83 @@
     <p><a id="logout" href="#">Sign out</a></p>
   </main>
   <script type="module">
+    /**
+     * protected.html — Demo Protected Page
+     *
+     * Purpose:
+     *  - This page demonstrates a minimal client-side "protected" page.
+     *  - It shows how the demo `SessionManager` can be used to gate access
+     *    to a page in a client-only example.
+     *
+     * Educational intent / reasoning:
+     *  - Keep this as a simple, obvious example for students to understand
+     *    redirect-on-auth-failure and logout flows without a server.
+     *  - It is intentionally NOT secure: tokens are demo unsigned Base64
+     *    payloads; do not use this pattern for real auth in production.
+     *
+     * Lines below include JSDoc for the main functions and inline comments
+     * explaining the step-by-step behavior.
+     */
     import SessionManager from './src/js/sessionManager.js';
-    (function(){
+
+    /**
+     * Initialize the protected page. This will check for a stored token
+     * and redirect to the login page if no valid token is present.
+     *
+     * @returns {void}
+     */
+    function initProtectedPage() {
+      // Create an instance of the demo SessionManager. In this demo the
+      // SessionManager reads/writes tokens to sessionStorage/localStorage.
+      // Real deployments should use server-issued HttpOnly cookies or
+      // validated JWTs issued by the server.
       const sm = new SessionManager();
-      const t = sm.getToken();
-      if (!t) {
-        // store intended and redirect to login
+
+      // Prefer session-scoped token, fallback to persistent token.
+      const token = sm.getToken();
+
+      // If there is no token, remember where the user intended to go and
+      // redirect to the login page. This emulates the common pattern of
+      // storing `intended` and returning the user after successful login.
+      if (!token) {
+        // Save the current path + search so the login flow can redirect back.
+        sessionStorage.setItem('intended', location.pathname + location.search);
+        // Use location.replace to avoid creating a history entry for the
+        // intermediate protected page (better UX on back-button).
+        location.replace('login.html');
+        return;
+      }
+
+      // If a token exists, we still recommend validating its structure and
+      // expiry. The demo sessionManager exposes `validateToken()`; calling
+      // it here shows where you'd add basic client-side checks for UX.
+      const check = sm.validateToken(token);
+      if (!check.valid) {
+        // If token is expired or invalid, save intended and redirect.
         sessionStorage.setItem('intended', location.pathname + location.search);
         location.replace('login.html');
         return;
       }
-      document.getElementById('logout').addEventListener('click', (e)=>{
-        e.preventDefault();
-        sm.clearToken();
-        location.replace('login.html');
-      });
-    })();
+
+      // Attach logout handler. This clears the demo token and returns to
+      // the login page. Clearing removes both sessionStorage and localStorage
+      // tokens (SessionManager.clearToken does both).
+      const logoutEl = document.getElementById('logout');
+      if (logoutEl) {
+        logoutEl.addEventListener('click', function handleLogout(e) {
+          e.preventDefault();
+          // Clear token from storage.
+          sm.clearToken();
+          // Redirect the user to the login page. We use replace to avoid
+          // leaving a stale history entry pointing at a protected page.
+          location.replace('login.html');
+        });
+      }
+    }
+
+    // Run the initializer immediately. Keeping this in a named function
+    // makes it easier for students to find and test in the console.
+    initProtectedPage();
   </script>
 </body>
 </html>
