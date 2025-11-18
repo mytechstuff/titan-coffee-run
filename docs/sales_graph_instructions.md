@@ -1,15 +1,13 @@
 # Sales Graph — Student Guide
 
-This document explains how the sales bar chart works and where to change values if you're learning JavaScript.
+This guide explains how the small sales bar chart works and where to change values. It's written for students learning vanilla JavaScript and SVG.
 
-Files:
-- `src/js/sales-graph.js` — the JavaScript module that renders the SVG chart.
-- `sales.html` — the demo page that contains the chart `<svg>` element (`#chart-area`) and loads the module.
+Files involved
+- `src/js/sales-graph.js` — the module that draws the chart into the SVG element `#chart-area`.
+- `sales.html` — the demo page that holds the SVG and loads the module.
 
-Data format
-- The module expects an array named `salesData` (attached to `window`) with the shape:
-  [{ quarter: 'Jan–Mar', amount: 2005.00 }, ...]
-- Example (place before the module script tag in `sales.html`):
+Quick example (how to provide data)
+1. In `sales.html`, before the module script tag, add:
 
 ```html
 <script>
@@ -23,32 +21,72 @@ Data format
 <script type="module" src="./src/js/sales-graph.js"></script>
 ```
 
-If you don't provide `window.salesData`, the module will use a default dataset.
+2. The module will read `window.salesData` when it initializes. If no data is provided, a default dataset is used.
 
-Key variables to experiment with (in `src/js/sales-graph.js`):
-- `svgHeight` — total height of the SVG. Increasing it gives more vertical space.
-- `marginTop`, `marginBottom`, `marginLeft`, `marginRight` — reserve space for axis labels and padding.
-- `barWidth` — width of each bar. Increasing this makes bars thicker and makes the chart wider.
-- `barPadding` — horizontal space between bars.
+Where to change visual variables (in `src/js/sales-graph.js`)
+- `svgHeight` — total height (pixels) of the SVG. Increasing this gives more vertical room.
+- `marginTop`, `marginBottom`, `marginLeft`, `marginRight` — space reserved for labels and axis ticks.
+- `barWidth` — width of each bar (in pixels). Increasing this makes bars thicker and the overall chart wider.
+- `barPadding` — horizontal space (in pixels) between bars.
 
-Rendering flow (high level):
-1. The module determines the data to use (`window.salesData` or default).
-2. It computes chart layout: viewBox, bar width, padding, and margins.
-3. For each data point it draws an SVG `<rect>` for the bar and an SVG `<text>` for the x-axis label.
-4. It draws horizontal grid lines and left-hand y-axis labels (computed from the max amount).
+Example snippet (from `sales-graph.js`) — these are the variables students usually change:
 
-Updating data at runtime
-- The module exposes `window.updateSalesData(newArray)` where `newArray` has the same object shape.
-- This is useful if you fetch data via XHR/fetch and then call `window.updateSalesData(serverData)`.
+```javascript
+const svgHeight = 360;
+const marginTop = 20;
+const marginBottom = 48; // space for x-axis labels
+const marginLeft = 56;   // space for y-axis labels
+const marginRight = 20;
+
+// Bar sizing (we increased width 50% for the demo)
+const barWidth = Math.round(40 * 1.5); // 60
+const barPadding = Math.round(16 * 1.5); // 24
+```
+
+Rendering flow (high level)
+1. The module chooses the data to use: `window.salesData` or the built-in `DEFAULT_SALES`.
+2. It computes the `viewBox` and layout using margins, barWidth, and padding.
+3. For each data point it draws an SVG `<rect>` for the bar and a `<text>` label for the quarter underneath.
+4. It draws horizontal grid lines and Y-axis numeric labels on the left.
+
+Where labels are drawn in the code
+- X labels (quarters): created inside the loop that draws each bar. Look for the block that creates an SVG `<text>` after creating the `<rect>`.
+- Y labels (ticks): created after bars are drawn in a small loop that computes `tVal` (tick value) and appends a `<text>` element at the left.
+
+Runtime updates
+- The module exposes `window.updateSalesData(newArray)` that accepts an array of objects in the same shape.
+- Example usage after the page loads:
+
+```html
+<script>
+  // replace the chart data and redraw
+  window.updateSalesData([
+    { quarter: 'Jan–Mar', amount: 2100 },
+    { quarter: 'Apr–Jun', amount: 1500 },
+    { quarter: 'Jul–Sep', amount: 900 },
+    { quarter: 'Oct–Dec', amount: 600 }
+  ]);
+</script>
+```
+
+Formatting numbers and currency
+- Right now the Y-axis labels use `Math.round(tVal)` and a leading `$`.
+- To show cents or locale-aware formatting, update the label creation to use `Intl.NumberFormat` or `toFixed(2)`. For example:
+
+```javascript
+const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+label.textContent = fmt.format(tVal);
+```
 
 Accessibility notes
-- The SVG includes a `<title>` element which provides a short description to assistive technologies.
-- X and Y axis labels are rendered as text nodes inside the SVG so that screen-readers can access them as well.
+- The SVG contains a `<title>` element so screen readers get a short description.
+- X and Y labels are normal SVG `<text>` nodes so they expose textual information to assistive tech.
 
-Hands-on exercises for students
-- Change `barWidth` and `barPadding` and observe how the chart scales horizontally.
-- Change `svgHeight` and margins and see how the vertical layout changes.
-- Format the y-axis labels to show cents using `toFixed(2)` or `Intl.NumberFormat`.
-- Add values above each bar by appending an extra `<text>` element above the rect with the numeric amount.
+Exercises for students
+- Tweak `barWidth`/`barPadding` and reload — notice how `viewBox` is updated.
+- Add a numeric label above each bar that shows the exact amount (append a `<text>` positioned at `barY - 6`).
+- Change `ticks` count to see more or fewer horizontal grid lines.
+- Make Y labels show cents using `Intl.NumberFormat`.
+- Make `barWidth` responsive by computing it from `totalWidth / data.length` instead of a fixed pixel value.
 
-If you'd like, I can add a small interactive interface that lets you tweak `barWidth` and `barPadding` live on the page and see the effect immediately.
+If you want I can add a small interactive control panel (on the page) so students can change `barWidth`, `barPadding`, and `ticks` live and see immediate results.
