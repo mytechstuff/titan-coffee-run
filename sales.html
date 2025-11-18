@@ -27,7 +27,7 @@
       <a href="contact.html">Contact</a>
       <a href="apply.html" class="nav-cta">Apply for Credit</a>
       <a href="login.html" class="nav-link nav-login" id="nav-login">Login</a>
-      <a href="register.html" class="nav-link nav-register">Sign up</a>
+      <a href="register.html" class="nav-link nav-register" id="nav-register">Sign up</a>
       <a href="sales.html" id="nav-sales" style="display:none">Sales</a>
     </nav>
   </header>
@@ -74,6 +74,11 @@
             navLogin.style.opacity = '';
           }
         }
+        // Replace Sign up text with 'Admin' while admin is logged in
+        try {
+          const navRegister = document.getElementById('nav-register');
+          if (navRegister) navRegister.textContent = isAdmin ? 'Admin' : 'Sign up';
+        } catch(e){}
         if (navSales) navSales.style.display = isAdmin ? '' : 'none';
       } catch(e){/* ignore */}
     })();
