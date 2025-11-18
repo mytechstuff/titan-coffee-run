@@ -43,6 +43,7 @@
             <!-- Authentication links (placeholder pages) -->
             <a href="login.html" class="nav-link nav-login" aria-label="Sign in to your account">Login</a>
             <a href="register.html" class="nav-link nav-register" aria-label="Create a new account">Sign up</a>
+            <a href="sales.html" id="sales-link" style="display:none">Sales</a>
         </nav>
     </header>
 
@@ -119,6 +120,17 @@
     <script>
         // Simple helper to inject the current year so the footer stays up-to-date.
         document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+    <script>
+        // Toggle visibility of Sales link when admin is logged in (simple client-side demo)
+        (function(){
+            try {
+                const salesLink = document.getElementById('sales-link');
+                if (!salesLink) return;
+                const isAdmin = localStorage.getItem('adminLoggedIn') === 'true';
+                salesLink.style.display = isAdmin ? '' : 'none';
+            } catch(e) { /* ignore in older browsers */ }
+        })();
     </script>
 
     <!--

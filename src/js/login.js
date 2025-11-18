@@ -90,6 +90,24 @@ document.addEventListener('DOMContentLoaded', ()=>{
         try { btn.disabled = true; } catch (e){}
         if (msg) msg.textContent = 'Checking...';
 
+        // Admin shortcut: if username is exactly 'admin' check admin password and treat specially
+        if (email === 'admin') {
+          // admin password for demo: tes123 (store state in localStorage for simplicity)
+          if (password === 'tes123') {
+            recordLoginAttempt(email, { success: true });
+            try { localStorage.setItem('adminLoggedIn', 'true'); } catch (e) { console.warn('failed to persist admin login', e); }
+            if (msg) msg.textContent = 'Admin signed in — redirecting to sales...';
+            setTimeout(()=> location.replace('sales.html'), 300);
+            return;
+          } else {
+            recordLoginAttempt(email, { success: false, reason: 'invalid' });
+            if (msg) { msg.textContent = 'Invalid admin credentials.'; msg.className = 'error'; }
+            try { window.alert('Admin sign in failed.'); } catch(e){}
+            try { btn.disabled = false; } catch(e){}
+            return;
+          }
+        }
+
         const res = await fakeAuth(email, password);
         console.log('[login.js] auth result', res);
         if (res.ok) {

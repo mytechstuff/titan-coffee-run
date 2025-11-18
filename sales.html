@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sales — Titan Coffee Run (Admin)</title>
+  <link rel="stylesheet" href="./src/styles/main.css">
+  <style>
+    .wrap{max-width:900px;margin:2rem auto;padding:1rem}
+    .chart-box{background:#fff;padding:1rem;border-radius:8px}
+    .btn{display:inline-block;padding:.5rem .75rem;border-radius:6px;background:#222;color:#fff;text-decoration:none}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Sales (Admin)</h1>
+    <p>This page is protected for admin users. You will be redirected to sign-in if not authenticated.</p>
+    <div class="chart-box" id="chart-box" aria-live="polite"></div>
+    <div style="margin-top:1rem">
+      <button id="logoutBtn" class="btn">Logout</button>
+    </div>
+  </main>
+
+  <script>
+    // Simple protection: redirect non-admin users to login
+    if (localStorage.getItem('adminLoggedIn') !== 'true') {
+      // preserve intended path
+      try { sessionStorage.setItem('intended', location.pathname); } catch(e){}
+      location.replace('login.html');
+    }
+
+    // Render a simple bar chart into #chart-box
+    (function render(){
+      const container = document.getElementById('chart-box');
+      const labels = ['Jan–Mar','Apr–Jun','Jul–Sep','Oct–Dec'];
+      const values = [12000,18000,15000,21000];
+      const width = 760, height = 320, pad = 40;
+      const max = Math.max(...values) * 1.1;
+      const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      svg.style.width = '100%';
+      svg.setAttribute('role','img');
+      const title = document.createElementNS('http://www.w3.org/2000/svg','title');
+      title.textContent = 'Quarterly sales'; svg.appendChild(title);
+      // grid lines
+      for(let i=0;i<=5;i++){ const y = pad + (height-pad*2)*(i/5); const line = document.createElementNS('http://www.w3.org/2000/svg','line'); line.setAttribute('x1',pad); line.setAttribute('x2',width-pad/2); line.setAttribute('y1',y); line.setAttribute('y2',y); line.setAttribute('stroke','#eee'); svg.appendChild(line); }
+      const gap = 20; const barW = (width - pad*2 - (labels.length-1)*gap)/labels.length;
+      values.forEach((v,i)=>{ const scaled = (v/max)*(height-pad*2); const x = pad + i*(barW+gap); const y = height - pad - scaled; const r = document.createElementNS('http://www.w3.org/2000/svg','rect'); r.setAttribute('x',x); r.setAttribute('y',y); r.setAttribute('width',barW); r.setAttribute('height',scaled); r.setAttribute('fill','#1f77b4'); svg.appendChild(r); const t = document.createElementNS('http://www.w3.org/2000/svg','text'); t.setAttribute('x',x+barW/2); t.setAttribute('y',height-pad+18); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','12'); t.textContent = labels[i]; svg.appendChild(t); });
+      container.innerHTML = ''; container.appendChild(svg);
+    })();
+
+    document.getElementById('logoutBtn').addEventListener('click', ()=>{
+      localStorage.removeItem('adminLoggedIn');
+      location.replace('login.html');
+    });
+  </script>
+</body>
+</html>
