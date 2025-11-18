@@ -2,10 +2,15 @@
 // Renders a simple bar chart into an SVG with id 'chart-area'.
 // Uses the user's provided code with a DOMContentLoaded wrapper.
 
-const data = [40, 80, 150, 160, 230, 420];
+// Prefer a global `salesDate` array if provided by the page; otherwise fall back to demo data.
+const DEFAULT_DATA = [40, 80, 150, 160, 230, 420];
+const data = (window.salesDate && Array.isArray(window.salesDate) && window.salesDate.length)
+  ? window.salesDate.slice() // copy to avoid accidental mutation
+  : DEFAULT_DATA.slice();
+
 const svgHeight = 300;
 const chartHeight = svgHeight; // Assuming no margins for simplicity
-const maxValue = Math.max(...data);
+const maxValue = data.length ? Math.max(...data) : 0;
 
 // A simple scaling function to map a data value to a pixel height
 function scaleHeight(value, maxDataValue, maxPixelHeight) {
