@@ -2,11 +2,18 @@
 // Renders a simple bar chart into an SVG with id 'chart-area'.
 // Uses the user's provided code with a DOMContentLoaded wrapper.
 
-// Prefer a global `salesDate` array if provided by the page; otherwise fall back to demo data.
-const DEFAULT_DATA = [40, 80, 150, 160, 230, 420];
-let chartData = (window.salesDate && Array.isArray(window.salesDate) && window.salesDate.length)
-  ? window.salesDate.slice() // copy to avoid accidental mutation
-  : DEFAULT_DATA.slice();
+// Prefer a global `salesData` array of objects if provided by the page; otherwise fall back to default data.
+// Each item should be { quarter: 'Jan-Mar', amount: 2005.00 }
+const DEFAULT_SALES = [
+  { quarter: 'Jan–Mar', amount: 2005.00 },
+  { quarter: 'Apr–Jun', amount: 1471.31 },
+  { quarter: 'Jul–Sep', amount: 892.86 },
+  { quarter: 'Oct–Dec', amount: 531.60 }
+];
+
+let chartData = (window.salesData && Array.isArray(window.salesData) && window.salesData.length && typeof window.salesData[0] === 'object')
+  ? window.salesData.map(it => ({ quarter: String(it.quarter || ''), amount: Number(it.amount || 0) }))
+  : DEFAULT_SALES.slice();
 
 const svgHeight = 300;
 const chartHeight = svgHeight; // Assuming no margins for simplicity
@@ -41,8 +48,11 @@ function createBarChart(data, svgHeight, chartHeight) {
   title.textContent = 'Sales bar chart (demo)';
   svg.appendChild(title);
 
-  const maxValue = getMaxValue(data);
-  data.forEach((value, index) => {
+  const amounts = data.map(d => Number(d.amount || 0));
+  const labels = data.map(d => String(d.quarter || ''));
+  const maxValue = getMaxValue(amounts);
+  data.forEach((d, index) => {
+    const value = Number(d.amount || 0);
     const barHeight = scaleHeight(value, maxValue, chartHeight);
     const barX = index * (barWidth + barPadding);
     const barY = chartHeight - barHeight;
@@ -55,14 +65,26 @@ function createBarChart(data, svgHeight, chartHeight) {
     rect.setAttribute('fill', 'teal');
 
     svg.appendChild(rect);
+    // label
+    const lx = barX + barWidth/2;
+    const ly = chartHeight + 18;
+    const ltxt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    ltxt.setAttribute('x', lx);
+    ltxt.setAttribute('y', ly);
+    ltxt.setAttribute('text-anchor','middle');
+    ltxt.setAttribute('font-size','12');
+    ltxt.setAttribute('fill','#111');
+    ltxt.textContent = labels[index] || '';
+    svg.appendChild(ltxt);
   });
 }
 
 // Expose an update function so pages can call to re-render with new data.
 window.updateSalesData = function(newData){
   if (!Array.isArray(newData)) return;
-  // coerce to numbers, filter out invalid values
-  const parsed = newData.map(v => Number(v)).filter(n => Number.isFinite(n));
+  // Expect array of {quarter, amount}
+  const parsed = newData.map(it => ({ quarter: String(it.quarter || ''), amount: Number(it.amount || 0) }))
+    .filter(it => Number.isFinite(it.amount));
   if (!parsed.length) return;
   chartData = parsed.slice();
   createBarChart(chartData, svgHeight, chartHeight);

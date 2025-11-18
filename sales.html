@@ -41,14 +41,7 @@
       <svg id="chart-area" role="img" aria-label="Sales bar chart" style="width:100%;height:300px"></svg>
     </div>
 
-    <div style="margin-top:1rem" class="chart-input">
-      <label for="sales-input" style="display:block;margin-bottom:.5rem">Enter sales data (comma or newline separated). Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to update chart.</label>
-      <textarea id="sales-input" rows="4" style="width:100%;padding:.5rem;font-family:monospace;">40, 80, 150, 160, 230, 420</textarea>
-      <div style="margin-top:.5rem;display:flex;gap:.5rem">
-        <button id="sendBtn" class="btn">Update Chart (Ctrl+Enter)</button>
-        <div id="inputStatus" style="align-self:center;color:var(--muted)"></div>
-      </div>
-    </div>
+    <!-- Data entry removed (may be re-added later) -->
 
     <div style="margin-top:1rem;display:flex;gap:.5rem;align-items:center">
       <button id="logoutBtn" class="btn">Logout</button>
@@ -108,41 +101,7 @@
       if (status) status.textContent = 'Admin state reset; reload to re-login.';
     });
 
-    // Handle sales data input: Enter inserts newline (default); Ctrl+Enter sends/updates chart
-    (function wireInput(){
-      const ta = document.getElementById('sales-input');
-      const send = document.getElementById('sendBtn');
-      const inputStatus = document.getElementById('inputStatus');
-      if (!ta || !send) return;
-
-      function parseAndUpdate(){
-        const raw = ta.value || '';
-        // allow comma or newline separated values
-        const parts = raw.split(/[,\n]+/).map(s => s.trim()).filter(s=>s.length);
-        const nums = parts.map(n=>Number(n)).filter(x => Number.isFinite(x));
-        if (!nums.length) {
-          if (inputStatus) inputStatus.textContent = 'No valid numbers found.';
-          return;
-        }
-        // update global and call update function
-        try { window.salesDate = nums.slice(); } catch(e){}
-        try { if (typeof window.updateSalesData === 'function') window.updateSalesData(nums); } catch(e){}
-        if (inputStatus) inputStatus.textContent = 'Chart updated.';
-      }
-
-      ta.addEventListener('keydown', (ev)=>{
-        if (ev.key === 'Enter' && ev.ctrlKey) {
-          ev.preventDefault();
-          parseAndUpdate();
-        }
-        // Otherwise Enter inserts newline in textarea by default
-      });
-
-      send.addEventListener('click', (ev)=>{
-        ev.preventDefault();
-        parseAndUpdate();
-      });
-    })();
+    // Data entry UI removed by request.
   </script>
   <script type="module" src="./src/js/sales-graph.js"></script>
 </body>
