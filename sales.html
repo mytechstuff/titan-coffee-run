@@ -12,26 +12,75 @@
   </style>
 </head>
 <body>
+  <header role="banner">
+    <a href="/" class="brand" aria-label="Titan Coffee Run home">
+      <div class="logo">T</div>
+      <div>
+        <div style="font-weight:800">Titan Coffee Run</div>
+        <div style="font-size:.85rem;color:var(--muted)">Fresh. Fast. Friendly.</div>
+      </div>
+    </a>
+    <nav role="navigation" aria-label="Primary navigation">
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="menu.html">Menu</a>
+      <a href="locations.html">Locations</a>
+      <a href="contact.html">Contact</a>
+      <a href="apply.html" class="nav-cta">Apply for Credit</a>
+      <a href="login.html" class="nav-link nav-login" id="nav-login">Login</a>
+      <a href="register.html" class="nav-link nav-register">Sign up</a>
+      <a href="sales.html" id="nav-sales" style="display:none">Sales</a>
+    </nav>
+  </header>
+
   <main class="wrap">
     <h1>Sales (Admin)</h1>
     <p>This page is protected for admin users. You will be redirected to sign-in if not authenticated.</p>
-    <div class="chart-box" id="chart-box" aria-live="polite"></div>
-    <div style="margin-top:1rem">
+
+    <div id="chart-container" class="chart-box" aria-live="polite" aria-label="Sales chart container">
+      <!-- Graph will be rendered into #chart-container -->
+    </div>
+
+    <div style="margin-top:1rem;display:flex;gap:.5rem;align-items:center">
       <button id="logoutBtn" class="btn">Logout</button>
+      <button id="resetBtn" class="btn" style="background:#666">Reset</button>
+      <div id="statusMsg" style="margin-left:1rem;color:var(--muted)"></div>
     </div>
   </main>
 
   <script>
-    // Simple protection: redirect non-admin users to login
+    // Protect page: redirect non-admins to login
     if (localStorage.getItem('adminLoggedIn') !== 'true') {
-      // preserve intended path
       try { sessionStorage.setItem('intended', location.pathname); } catch(e){}
       location.replace('login.html');
     }
 
-    // Render a simple bar chart into #chart-box
+    // Toggle top nav state: replace Login with Admin Logged in when appropriate
+    (function toggleNav(){
+      try {
+        const isAdmin = localStorage.getItem('adminLoggedIn') === 'true';
+        const navLogin = document.getElementById('nav-login');
+        const navSales = document.getElementById('nav-sales');
+        if (navLogin) {
+          if (isAdmin) {
+            navLogin.textContent = 'Admin Logged in';
+            navLogin.removeAttribute('href');
+            navLogin.setAttribute('aria-current','false');
+            navLogin.style.opacity = '0.85';
+            navLogin.style.pointerEvents = 'none';
+          } else {
+            navLogin.textContent = 'Login';
+            navLogin.href = 'login.html';
+            navLogin.style.pointerEvents = '';
+            navLogin.style.opacity = '';
+          }
+        }
+        if (navSales) navSales.style.display = isAdmin ? '' : 'none';
+      } catch(e){/* ignore */}
+    })();
+
+    // Render a simple bar chart into #chart-container
     (function render(){
-      const container = document.getElementById('chart-box');
+      const container = document.getElementById('chart-container');
       const labels = ['Jan–Mar','Apr–Jun','Jul–Sep','Oct–Dec'];
       const values = [12000,18000,15000,21000];
       const width = 760, height = 320, pad = 40;
@@ -52,6 +101,14 @@
     document.getElementById('logoutBtn').addEventListener('click', ()=>{
       localStorage.removeItem('adminLoggedIn');
       location.replace('login.html');
+    });
+
+    // Reset button: clears admin flag and any demo storage items (keeps user in page)
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      localStorage.removeItem('adminLoggedIn');
+      // clear any demo graph-related keys here if needed later
+      const status = document.getElementById('statusMsg');
+      if (status) status.textContent = 'Admin state reset; reload to re-login.';
     });
   </script>
 </body>
