@@ -15,8 +15,13 @@ let chartData = (window.salesData && Array.isArray(window.salesData) && window.s
   ? window.salesData.map(it => ({ quarter: String(it.quarter || ''), amount: Number(it.amount || 0) }))
   : DEFAULT_SALES.slice();
 
-const svgHeight = 300;
-const chartHeight = svgHeight; // Assuming no margins for simplicity
+// Layout: reserve margins for axis labels
+const svgHeight = 360;
+const marginTop = 20;
+const marginBottom = 48; // space for x-axis labels
+const marginLeft = 56; // space for y-axis labels
+const marginRight = 20;
+const chartHeight = svgHeight - marginTop - marginBottom;
 
 function getMaxValue(arr){
   return arr && arr.length ? Math.max(...arr) : 0;
@@ -37,8 +42,8 @@ function createBarChart(data, svgHeight, chartHeight) {
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
   const barWidth = 40; // fixed bar width
-  const barPadding = 10; // space between bars
-  const totalWidth = data.length * barWidth + (data.length - 1) * barPadding;
+  const barPadding = 16; // space between bars
+  const totalWidth = marginLeft + data.length * barWidth + (data.length - 1) * barPadding + marginRight;
   svg.setAttribute('viewBox', `0 0 ${totalWidth} ${svgHeight}`);
   svg.setAttribute('height', svgHeight);
   svg.setAttribute('width', '100%');
@@ -54,8 +59,8 @@ function createBarChart(data, svgHeight, chartHeight) {
   data.forEach((d, index) => {
     const value = Number(d.amount || 0);
     const barHeight = scaleHeight(value, maxValue, chartHeight);
-    const barX = index * (barWidth + barPadding);
-    const barY = chartHeight - barHeight;
+    const barX = marginLeft + index * (barWidth + barPadding);
+    const barY = marginTop + (chartHeight - barHeight);
 
     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     rect.setAttribute('x', barX);
@@ -65,9 +70,9 @@ function createBarChart(data, svgHeight, chartHeight) {
     rect.setAttribute('fill', 'teal');
 
     svg.appendChild(rect);
-    // label
+    // x-axis label under each bar
     const lx = barX + barWidth/2;
-    const ly = chartHeight + 18;
+    const ly = marginTop + chartHeight + 20;
     const ltxt = document.createElementNS('http://www.w3.org/2000/svg','text');
     ltxt.setAttribute('x', lx);
     ltxt.setAttribute('y', ly);
@@ -77,6 +82,32 @@ function createBarChart(data, svgHeight, chartHeight) {
     ltxt.textContent = labels[index] || '';
     svg.appendChild(ltxt);
   });
+
+  // y-axis ticks and labels (left side)
+  const ticks = 4;
+  for (let i = 0; i <= ticks; i++) {
+    const tVal = (maxValue / ticks) * i;
+    const y = marginTop + (chartHeight - (tVal / maxValue) * chartHeight);
+    // horizontal grid line
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', marginLeft - 6);
+    line.setAttribute('x2', totalWidth - marginRight);
+    line.setAttribute('y1', y);
+    line.setAttribute('y2', y);
+    line.setAttribute('stroke', '#eee');
+    line.setAttribute('stroke-width', '1');
+    svg.appendChild(line);
+
+    // label
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', marginLeft - 10);
+    label.setAttribute('y', y + 4);
+    label.setAttribute('text-anchor', 'end');
+    label.setAttribute('font-size', '12');
+    label.setAttribute('fill', '#333');
+    label.textContent = '$' + (Math.round(tVal));
+    svg.appendChild(label);
+  }
 }
 
 // Expose an update function so pages can call to re-render with new data.
