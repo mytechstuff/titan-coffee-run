@@ -92,8 +92,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
         // Admin shortcut: if username is exactly 'admin' check admin password and treat specially
         if (email === 'admin') {
-          // admin password for demo: tes123 (store state in localStorage for simplicity)
-          if (password === 'tes123') {
+          // admin password for demo: test123 (store state in localStorage for simplicity)
+          if (password === 'test123') {
             recordLoginAttempt(email, { success: true });
             try { localStorage.setItem('adminLoggedIn', 'true'); } catch (e) { console.warn('failed to persist admin login', e); }
             if (msg) msg.textContent = 'Admin signed in — redirecting to sales...';
