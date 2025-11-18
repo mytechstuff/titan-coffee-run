@@ -45,20 +45,20 @@ Files and notable modules
   - `dev-server/server.js` — small Express demo server (issues JWTs, added password-history demo endpoints)
   - `dev-server/package.json` — includes `express`, `jsonwebtoken`, and `argon2` for the demo
 - Documentation and notes:
-  - `devnotes.md` — developer notes, architecture rationale, and change-log
-  - `securty_review.md` — security review and guidance (password history, reset flows)
+  - `docs/devnotes.md` — developer notes, architecture rationale, and change-log
+  - `docs/securty_review.md` — security review and guidance (password history, reset flows)
   - `secure_optios.md` — duplicate pointer (typo file)
 
 Security / important warnings
 
 - This project contains multiple client-side demo implementations of auth and storage. These are deliberately educational and are NOT production-ready:
   - Demo tokens are unsigned Base64 tokens in the client by default — do not use for real auth.
-  - Sensitive data such as passwords or PII must not be stored in localStorage in production. See `securty_review.md` for guidance.
+  - Sensitive data such as passwords or PII must not be stored in localStorage in production. See `docs/securty_review.md` for guidance.
   - The `dev-server` includes an in-memory password-history demo using Argon2 for testing only; it is not persistent and is for local development.
 
 Flow diagrams and collaboration
 
-- For flowcharts I recommend using `mermaid` for repo-contained diagrams (text-based), or `diagrams.net` / `Lucidchart` for visual diagrams. See `devnotes.md` for suggested Mermaid snippets.
+  - For flowcharts I recommend using `mermaid` for repo-contained diagrams (text-based), or `diagrams.net` / `Lucidchart` for visual diagrams. See `docs/devnotes.md` for suggested Mermaid snippets.
 
 Tooling and editor notes
 
@@ -71,7 +71,7 @@ How you can help / next steps
   - Add server-side signed JWT flows and HttpOnly cookies.
   - Add server-side rate-limiting and persistent password-history storage.
   - Replace demo Base64 token flows with proper server-issued tokens.
-- For the demo, I can also add a small Mermaid flowchart into `securty_review.md` to visualize the password-reset flow.
+- For the demo, I can also add a small Mermaid flowchart into `docs/securty_review.md` to visualize the password-reset flow.
 
 Contact / notes
 
