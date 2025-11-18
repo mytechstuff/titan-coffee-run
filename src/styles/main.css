@@ -90,3 +90,22 @@ footer{max-width:980px;margin:2rem auto;padding:1rem;text-align:center;color:var
         */
         .hero{grid-template-columns:1fr 320px;align-items:center}
 }
+
+/* Chart styles */
+#chart-area{
+    display:block;
+    border:5px solid rgba(16,24,32,0.06);
+    border-radius:8px;
+    background: #fff;
+    box-shadow: 0 6px 18px rgba(98,54,30,0.035);
+    overflow:visible;
+}
+
+/* Bars get a pointer cursor and smooth color transition */
+#chart-area rect{cursor:pointer;transition:fill .12s ease, transform .12s ease;}
+
+/* Hover/active visual state applied by JS listeners */
+#chart-area rect.hover{fill:rgb(0, 255, 4);stroke:#b35a00;stroke-width:1;transform:translateY(-4px)}
+
+/* Make focused bars visible for keyboard users */
+#chart-area rect:focus{outline:none;stroke:#444;stroke-width:1.5}

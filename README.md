@@ -41,9 +41,11 @@ Files and notable modules
   - `src/js/login.js` — login wiring and demo token flow
   - `src/js/loginRateLimiter.js` — client-side rate-limiter (UX layer)
   - `src/js/sessionManager.js` — centralized demo token handling
+
 - Dev server: `dev-server/`
   - `dev-server/server.js` — small Express demo server (issues JWTs, added password-history demo endpoints)
   - `dev-server/package.json` — includes `express`, `jsonwebtoken`, and `argon2` for the demo
+
 - Documentation and notes:
   - `docs/devnotes.md` — developer notes, architecture rationale, and change-log
   - `docs/securty_review.md` — security review and guidance (password history, reset flows)
@@ -56,26 +58,11 @@ Security / important warnings
   - Sensitive data such as passwords or PII must not be stored in localStorage in production. See `docs/securty_review.md` for guidance.
   - The `dev-server` includes an in-memory password-history demo using Argon2 for testing only; it is not persistent and is for local development.
 
-Flow diagrams and collaboration
-
-  - For flowcharts I recommend using `mermaid` for repo-contained diagrams (text-based), or `diagrams.net` / `Lucidchart` for visual diagrams. See `docs/devnotes.md` for suggested Mermaid snippets.
-
-Tooling and editor notes
-
-- Recommended editor: Visual Studio Code.
-- GitHub Copilot / VS Code Copilot note: the workspace was developed with assistance from GitHub Copilot (integration). When asked about the model used in assistant responses, the agent reports `GPT-5 mini` as the assisting model.
-
-How you can help / next steps
-
-- If you want production-grade auth, I can:
-  - Add server-side signed JWT flows and HttpOnly cookies.
-  - Add server-side rate-limiting and persistent password-history storage.
-  - Replace demo Base64 token flows with proper server-issued tokens.
-- For the demo, I can also add a small Mermaid flowchart into `docs/securty_review.md` to visualize the password-reset flow.
 
 Contact / notes
 
-Open an issue or tell me which of the next steps you'd like me to implement: add tests, harden the dev-server, or produce diagrams and client validators.
+Student: Michael Chretien
+ID: 
 
 ---
 
