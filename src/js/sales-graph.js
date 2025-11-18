@@ -4,13 +4,16 @@
 
 // Prefer a global `salesDate` array if provided by the page; otherwise fall back to demo data.
 const DEFAULT_DATA = [40, 80, 150, 160, 230, 420];
-const data = (window.salesDate && Array.isArray(window.salesDate) && window.salesDate.length)
+let chartData = (window.salesDate && Array.isArray(window.salesDate) && window.salesDate.length)
   ? window.salesDate.slice() // copy to avoid accidental mutation
   : DEFAULT_DATA.slice();
 
 const svgHeight = 300;
 const chartHeight = svgHeight; // Assuming no margins for simplicity
-const maxValue = data.length ? Math.max(...data) : 0;
+
+function getMaxValue(arr){
+  return arr && arr.length ? Math.max(...arr) : 0;
+}
 
 // A simple scaling function to map a data value to a pixel height
 function scaleHeight(value, maxDataValue, maxPixelHeight) {
@@ -19,7 +22,7 @@ function scaleHeight(value, maxDataValue, maxPixelHeight) {
 }
 
 // Function to create and position SVG bars
-function createBarChart(data, svgHeight, chartHeight, maxValue) {
+function createBarChart(data, svgHeight, chartHeight) {
   const svg = document.getElementById('chart-area');
   if (!svg) return;
 
@@ -38,6 +41,7 @@ function createBarChart(data, svgHeight, chartHeight, maxValue) {
   title.textContent = 'Sales bar chart (demo)';
   svg.appendChild(title);
 
+  const maxValue = getMaxValue(data);
   data.forEach((value, index) => {
     const barHeight = scaleHeight(value, maxValue, chartHeight);
     const barX = index * (barWidth + barPadding);
@@ -54,8 +58,18 @@ function createBarChart(data, svgHeight, chartHeight, maxValue) {
   });
 }
 
+// Expose an update function so pages can call to re-render with new data.
+window.updateSalesData = function(newData){
+  if (!Array.isArray(newData)) return;
+  // coerce to numbers, filter out invalid values
+  const parsed = newData.map(v => Number(v)).filter(n => Number.isFinite(n));
+  if (!parsed.length) return;
+  chartData = parsed.slice();
+  createBarChart(chartData, svgHeight, chartHeight);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
-  createBarChart(data, svgHeight, chartHeight, maxValue);
+  createBarChart(chartData, svgHeight, chartHeight);
 });
 
 export {};
