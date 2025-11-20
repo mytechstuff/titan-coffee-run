@@ -16,10 +16,11 @@
 // Extra references / articles:
 // - Canvas and accessibility: https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/canvas_role
 // - Practical tips for crisp canvas rendering on high-DPI displays (blog posts and MDN snippets inspired the approach above)
+
 ;(function(){
   // Keep the same quarterly constants for easy comparison
   const DEFAULT_SALES = [
-    { quarter: 'Jan–Mar', amount: 1995.00 },
+    { quarter: 'Jan–Mar', amount: 2005.00 },
     { quarter: 'Apr–Jun', amount: 1471.31 },
     { quarter: 'Jul–Sep', amount: 892.86 },
     { quarter: 'Oct–Dec', amount: 531.60 }
@@ -67,6 +68,8 @@
   // Animation state (simple incremental approach)
   let animationProgress = 1; // start full by default
   let animating = false;
+  // raf handle for programmatic animations (used by animateTo)
+  let rafAnim = null;
 
   // ------------------- Drawing helpers -------------------
   /**
@@ -180,10 +183,35 @@
 
   // ------------------- Animation -------------------
   /**
-   * resetGraph
-   * Stop animation and set progress to 0 so bars render at zero height.
+   * animateTo
+   * Smoothly animate `animationProgress` from its current value to
+   * `target` over `duration` milliseconds using a cosine easing.
+   * This helper is used by `resetGraph` to shrink bars to zero.
    */
-  function resetGraph(){ animating = false; animationProgress = 0; drawChart(); }
+  function animateTo(target = 0, duration = 500){
+    if (rafAnim) cancelAnimationFrame(rafAnim);
+    const start = performance.now();
+    const from = animationProgress;
+    const diff = target - from;
+    if (!duration){ animationProgress = target; drawChart(); return; }
+    animating = true;
+    function step(ts){
+      const t = Math.min(1, (ts - start) / duration);
+      const eased = (1 - Math.cos(Math.PI * t)) / 2; // easeInOut
+      animationProgress = from + diff * eased;
+      drawChart();
+      if (t < 1) rafAnim = requestAnimationFrame(step);
+      else { animationProgress = target; animating = false; rafAnim = null; }
+    }
+    rafAnim = requestAnimationFrame(step);
+  }
+
+  /**
+   * resetGraph
+   * Animate bars back to zero instead of snapping instantly. We call
+   * `animateTo(0, duration)` here — this is where the shrinking occurs.
+   */
+  function resetGraph(){ animateTo(0, 500); }
 
   /**
    * playAnimation
@@ -191,14 +219,12 @@
    * `animationProgress` from 0→1. This is intentionally basic for
    * pedagogical clarity; higher-fidelity easing could be added later.
    */
-  function playAnimation(){ animationProgress = 0; animating = true; requestAnimationFrame(stepAnim); }
-
   /**
-   * stepAnim
-   * Animation frame step: advance progress by a small fixed delta and
-   * request another frame until progress reaches 1.
+   * playAnimation
+   * Animate from current state to fully visible (progress = 1).
+   * Uses `animateTo` for smooth easing and a consistent API with reset.
    */
-  function stepAnim(){ animationProgress += 0.04; if (animationProgress > 1) animationProgress = 1; drawChart(); if (animating && animationProgress < 1) requestAnimationFrame(stepAnim); else animating = false; }
+  function playAnimation(){ animateTo(1, 700); }
 
   // ------------------- Hover -------------------
   /**
