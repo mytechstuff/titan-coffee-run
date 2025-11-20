@@ -101,6 +101,30 @@
 
   // Initialize: draw with full bars if admin, otherwise do nothing (page-level auth controls apply)
   try{ if (localStorage.getItem('adminLoggedIn') === 'true'){ animationProgress = 1; drawChart(); } }catch(e){ animationProgress = 1; drawChart(); }
+  // Wire the page-level Reset button (if present) so it resets this simple chart.
+  try{
+    const resetBtn = document.getElementById('graphResetBtn');
+    if (resetBtn) resetBtn.addEventListener('click', resetGraph);
+  }catch(e){}
+
+  // Insert a small Play Sales toolbar (mirrors the main implementation)
+  try{
+    const container = document.getElementById('chart-container') || document.querySelector('.chart-box');
+    if (container){
+      let toolbar = container.querySelector('.sales-chart-toolbar');
+      if(!toolbar){
+        toolbar = document.createElement('div');
+        toolbar.className = 'sales-chart-toolbar';
+        container.insertBefore(toolbar, container.firstChild);
+      }
+      if(!toolbar.querySelector('.sales-play-btn')){
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'sales-play-btn'; btn.textContent = 'Play Sales';
+        btn.addEventListener('click', ()=> playAnimation());
+        toolbar.appendChild(btn);
+      }
+    }
+  }catch(e){ /* ignore toolbar insertion errors */ }
 
 })();
 // sales-graph-simple.js — compact SVG bar chart (teaching/demo)
