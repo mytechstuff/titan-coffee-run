@@ -66,11 +66,18 @@
    * canvas Y coordinates using `originY - (chartHeight / numLines) * i`.
    */
   function drawGridLines(){
-    ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1; ctx.fillStyle = '#111'; ctx.font = '12px Arial';
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#111';
+    ctx.font = '12px Arial';
     const numLines = 5;
-    for (let i=0;i<=numLines;i++){
+    for (let i = 0; i <= numLines; i++){
       const y = originY - (chartHeight / numLines) * i;
-      ctx.beginPath(); ctx.moveTo(originX, y); ctx.lineTo(originX + 500, y); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(originX, y);
+      ctx.lineTo(originX + 500, y);
+      ctx.stroke();
+
       const value = Math.round((Math.max(...values) / numLines) * i);
       ctx.fillText(value, originX - 40, y + 4);
     }
@@ -81,7 +88,20 @@
    * Draw simple X and Y axes. Coordinates are absolute: X axis runs from
    * `originX` to `originX+500`, Y axis goes up by `chartHeight`.
    */
-  function drawAxes(){ ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(originX + 500, originY); ctx.stroke(); ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(originX, originY - chartHeight); ctx.stroke(); }
+  function drawAxes(){
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.moveTo(originX, originY);
+    ctx.lineTo(originX + 500, originY);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(originX, originY);
+    ctx.lineTo(originX, originY - chartHeight);
+    ctx.stroke();
+  }
 
   /**
    * drawBars
@@ -95,17 +115,22 @@
     barAreas = [];
     const max = Math.max(...values, 1);
     const scale = chartHeight / max;
-    values.forEach((v,i)=>{
+    values.forEach((v, i) => {
       const barHeight = Math.round(v * scale * animationProgress);
       const x = originX + i * (barWidth + gap);
       const y = originY - barHeight;
+
+      // choose color and draw the bar
       ctx.fillStyle = (i === highlightIndex) ? 'gold' : colors[i % colors.length];
       ctx.fillRect(x, y, barWidth, barHeight);
+
       // numeric label centered above bar
       const displayedValue = Math.round(v * animationProgress);
-      ctx.fillStyle = '#111'; ctx.font = '14px Arial';
+      ctx.fillStyle = '#111';
+      ctx.font = '14px Arial';
       const textW = ctx.measureText(displayedValue).width;
-      ctx.fillText(displayedValue, x + (barWidth - textW)/2, y - 6);
+      ctx.fillText(displayedValue, x + (barWidth - textW) / 2, y - 6);
+
       barAreas.push({ x, y, width: barWidth, height: barHeight });
     });
   }
@@ -115,14 +140,27 @@
    * Draw the label text beneath each bar. We center each label under the
    * bar by computing the bar's center X position.
    */
-  function drawLabels(){ ctx.fillStyle = '#111'; ctx.font = '14px Arial'; labels.forEach((lab,i)=>{ const x = originX + i * (barWidth + gap) + barWidth/2; ctx.fillText(lab, x - 20, originY + 22); }); }
+  function drawLabels(){
+    ctx.fillStyle = '#111';
+    ctx.font = '14px Arial';
+    labels.forEach((lab, i) => {
+      const x = originX + i * (barWidth + gap) + barWidth / 2;
+      ctx.fillText(lab, x - 20, originY + 22);
+    });
+  }
 
   /**
    * drawChart
    * Compose full chart rendering: clear canvas, draw grid, axes, bars,
    * and labels. `highlight` is an optional index to emphasize a bar.
    */
-  function drawChart(highlight=-1){ clear(); drawGridLines(); drawAxes(); drawBars(highlight); drawLabels(); }
+  function drawChart(highlight = -1){
+    clear();
+    drawGridLines();
+    drawAxes();
+    drawBars(highlight);
+    drawLabels();
+  }
 
   // ------------------- Animation -------------------
   /**
@@ -153,11 +191,14 @@
    * `barAreas` recorded during `drawBars`. If a bar is under the cursor
    * we redraw the chart with that index highlighted.
    */
-  canvas.addEventListener('mousemove', (e)=>{
+  canvas.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left; const my = e.clientY - rect.top;
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
     let idx = -1;
-    barAreas.forEach((b,i)=>{ if (mx > b.x && mx < b.x + b.width && my > b.y && my < b.y + b.height) idx = i; });
+    barAreas.forEach((b, i) => {
+      if (mx > b.x && mx < b.x + b.width && my > b.y && my < b.y + b.height) idx = i;
+    });
     drawChart(idx);
   });
   canvas.addEventListener('mouseleave', ()=> drawChart(-1));
