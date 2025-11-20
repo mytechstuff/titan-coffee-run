@@ -1,5 +1,21 @@
 // Minimal, pedagogical canvas chart for quick testing (simple, not production)
 // Uses the same quarterly DEFAULT_SALES data as the main implementation.
+//
+// Sources used to help build this code:
+// - MDN Canvas API overview: https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API
+// - MDN CanvasRenderingContext2D (methods like fillRect, measureText):
+//   https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
+// - HiDPI / devicePixelRatio & canvas scaling guidance:
+//   https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio#scaling_canvas_for_high_dpi_displays
+// - requestAnimationFrame (animation loop): https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame
+// - ResizeObserver (responsive redraws): https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver
+// - SVG introduction and techniques (used earlier when prototyping): https://developer.mozilla.org/en-US/docs/Web/SVG
+// - getBoundingClientRect (hit testing / coordinate conversion):
+//   https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
+//
+// Extra references / articles:
+// - Canvas and accessibility: https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/canvas_role
+// - Practical tips for crisp canvas rendering on high-DPI displays (blog posts and MDN snippets inspired the approach above)
 ;(function(){
   // Keep the same quarterly constants for easy comparison
   const DEFAULT_SALES = [
