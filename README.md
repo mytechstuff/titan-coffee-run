@@ -2,7 +2,7 @@
 
 **Tested**
 
-- Chrome (Latest): [ ]
+- Chrome (Latest): [x ]
 - Firefox (Latest): [ ]
 - Edge (Latest): [ ]
 
