@@ -1,5 +1,13 @@
 # Titan Coffee Run
 
+**Tested**
+
+- Chrome (Latest): [ ]
+- Firefox (Latest): [ ]
+- Edge (Latest): [ ]
+
+_How to test:_ Open `sales.html` (or `index.html`) in each browser, use the "Play Sales" button and the "Reset Graph" button to verify animation and hover behavior. Record results above.
+
 
 Tools Used: VS Code CoPilot
 Google Gemini
