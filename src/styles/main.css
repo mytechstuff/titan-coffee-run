@@ -94,7 +94,7 @@ footer{max-width:980px;margin:2rem auto;padding:1rem;text-align:center;color:var
 /* Chart styles */
 #chart-area{
     display:block;
-    border:5px solid rgba(16,24,32,0.06);
+    border:5px solid rgba(1, 9, 16, 0.06);
     border-radius:8px;
     background: #fff;
     box-shadow: 0 6px 18px rgba(98,54,30,0.035);
@@ -109,3 +109,20 @@ footer{max-width:980px;margin:2rem auto;padding:1rem;text-align:center;color:var
 
 /* Make focused bars visible for keyboard users */
 #chart-area rect:focus{outline:none;stroke:#444;stroke-width:1.5}
+
+/* Toolbar inserted by `sales-graph.js` */
+.sales-chart-toolbar{
+    display:flex;
+    justify-content:flex-end;
+    margin-bottom:6px;
+}
+.sales-play-btn{
+    padding:6px 10px;
+    font-size:13px;
+    cursor:pointer;
+    border-radius:6px;
+    border: none;
+    background:#1f2937;
+    color:#fff;
+}
+.sales-play-btn:hover{background:#374151}
