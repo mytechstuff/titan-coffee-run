@@ -126,3 +126,17 @@ footer{max-width:980px;margin:2rem auto;padding:1rem;text-align:center;color:var
     color:#fff;
 }
 .sales-play-btn:hover{background:#374151}
+
+/* Simple demo styles for `sales-graph-simple.js` */
+.simple-demo{
+    display:block;
+    max-width:720px;
+    margin:0 auto;
+    background:#fff;
+    padding:16px;
+    border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.06);
+}
+.simple-demo canvas{display:block;margin:0 auto}
+.simple-btn{margin:6px;padding:8px 12px;border-radius:6px;border:none;background:#374151;color:#fff;cursor:pointer}
+.simple-btn:focus{outline:3px solid rgba(79,70,229,0.12)}
