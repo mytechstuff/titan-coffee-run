@@ -1,52 +1,96 @@
-# Documentation Index
+````markdown
+# Titan Coffee Run
 
-This folder (`docs/`) contains the canonical Markdown documentation for the Titan Coffee Run project.
+**Tested**
 
-Files
-- `docs/devnotes.md` — Developer notes, architecture rationale, and change-log.
-- `docs/securty_review.md` — Security recommendations and password-history/reset guidance.
-- `docs/sprint_1_notes.md` — Sprint 1 summary, tasks, and next steps.
-- `docs/Storage_Architeture.md` — Notes about client-side storage, backup/restore and migrations.
-- `docs/test_cases.md` — Manual test cases for the credit application flow.
-- `docs/test_cases_reg.md` — Registration form test cases.
-- `docs/Ai_promts_task2.md` — Saved AI prompt and assistant reply (task 2).
-- `docs/Ai_prompts_task3.md` — Saved AI prompt and assistant reply (task 3).
-- `docs/sales_graph_instructions.md` — Student-facing instructions for the sales SVG chart.
+- Chrome (Latest):  [x]
+- Firefox (Latest): [ ]
+- Edge (Latest):    [ ]
 
-Why these files were moved
+Notes: I could NOT figure out how to test for Firefox or Edge (oddly) without seemingly having to make a server for this as it's client side only app.  More research should go into this.
 
-To keep the repository tidy and make documentation easier to find, the project's Markdown files have been consolidated under `docs/`. The root README now points to these files.
+_How to test:_ Open `sales.html` (or `index.html`) in each browser, use the "Play Sales" button and the "Reset Graph" button to verify animation and hover behavior. Record results above.
 
-If you relied on the old root paths: update links to `docs/<filename>.md` (most references in the repo were updated automatically).
+Module 4 Questions: 
+1. Biggest AhA moment:  
+   Asking to "dumb" down many times to make sure code was readable, usable, testable.  Had multiple failures before success on several parts...nav menu (still needs Hamburger style for small screens),  actual security without becoming a full blown security coding expert (which i'm not...hence the many code comments by me and the AI)
 
-Suggested PR details
+   A second AI is that it is constantly evolving.  Agents, Agentic AI Automation,  Spec Driven development.  In some ways it helps devs create basic infrastructure and some details that were previously handed to UI/UX devs can be done "in house" in mere moments. Not days.  
 
-- Title: Move top-level Markdown docs into `docs/` and update README links
+   This AI is not going away.  New dev entry level jobs will go pooof.  As is happening NOW not later.  Not when the tech stack matures...but now.  
 
-- Description (copy into PR body):
+   I am ashamed I had to use too much of it but I can't imagine what CS Grads are going to do.  
 
-  This change tidies repository structure by moving all top-level Markdown documentation into a `docs/` folder and updating in-repo links to point at `docs/<filename>.md`.
+Tools Used: 
+1. VS Code CoPilot
+2. Google Gemini
 
-  Summary:
-  - Moved: `devnotes.md`, `sprint_1_notes.md`, `Storage_Architeture.md`, `test_cases.md`, `test_cases_reg.md`, `Ai_promts_task2.md`, `Ai_prompts_task3.md`, `securty_review.md` → `docs/`
-  - Updated `README.md` to reference `docs/` paths for the moved files.
-  - Removed duplicate root files.
+Percentage estimate: 
+85-90% AI code, but tested and reviewed.  
+Personal notations were made in several files. 
 
-  Rationale:
-  - Organizes documentation in a single place for easier discovery and cleaner repo root.
+Specific Comments:
+1. Form Validation class (will rework and insert) --- see registration.js ---
+2. Will see about vulnerabilities.  I believe it asked me to add test software and automated testing.  I thought that was beyond my scope and asked to doc the security instead.  I will try to reassess and upload the changes.
+3. See security_review.md for changes I asked to be made to point out vulnerabilities but not make those chages (yet)  --- has ## security findings ## section on top.
 
-  Review notes:
-  - Please scan any external references (links from issues/PRs or wiki pages) and update them if they rely on the old root-file paths.
-  - If you prefer a different docs structure (e.g., `documentation/` or subfolders), I can move files accordingly and update links.
+To Start: 
+Lightweight demo site and teaching scaffold for a small client-side application (forms, storage, and simple auth demos).
 
-Next steps (optional)
-- Add a `docs/CONTRIBUTING.md` or `docs/README-guidelines.md` if you want contributors to add docs in a particular style or structure.
-- Add a GitHub Pages / mkdocs config to publish `docs/` as project documentation.
+Status (current)
+- Branch: `work/save-local-20251112-2036`
+- Last update: 2025-11-12
+- This repo is primarily a static front-end demo with an optional local dev server used for testing authentication flows.
+- Several client-side demo modules were added: onboarding/registration, a versioned local storage user model, a demo SessionManager, a client-side rate-limiter, and a dev-server scaffold for testing password-history checks.
+
+
+
+```powershell
+cd "c:\Users\mikec\Titan Coffee Run\dev-server"
+npm install
+# optional: set secrets for demo behavior
+# $env:JWT_SECRET = 'dev-secret-please-change'
+# $env:SERVER_PEPPER = 'replace-with-secure-pepper'
+npm start
+```
+
+Files and notable modules
+
+- Top-level pages:
+  - `index.html`, `apply.html`, `login.html`, `register.html`, `menu.html`, `protected.html`
+- Source (client JS): `src/`
+  - `src/index.js` — carousel and root script
+  - `src/qualify.js` — form validation and demo wiring for `apply.html`
+  - `src/js/userStorage.js` — versioned user model, storage helpers, backup/restore
+  - `src/js/registration.js` — registration form wiring
+  - `src/js/login.js` — login wiring and demo token flow
+  - `src/js/loginRateLimiter.js` — client-side rate-limiter (UX layer)
+  - `src/js/sessionManager.js` — centralized demo token handling
+
+- Dev server: `dev-server/`
+  - `dev-server/server.js` — small Express demo server (issues JWTs, added password-history demo endpoints)
+  - `dev-server/package.json` — includes `express`, `jsonwebtoken`, and `argon2` for the demo
+
+- Documentation and notes:
+  - `docs/devnotes.md` — developer notes, architecture rationale, and change-log
+  - `docs/securty_review.md` — security review and guidance (password history, reset flows)
+  - `secure_optios.md` — duplicate pointer (typo file)
+
+Security / important warnings
+
+- This project contains multiple client-side demo implementations of auth and storage. These are deliberately educational and are NOT production-ready:
+  - Demo tokens are unsigned Base64 tokens in the client by default — do not use for real auth.
+  - Sensitive data such as passwords or PII must not be stored in localStorage in production. See `docs/securty_review.md` for guidance.
+  - The `dev-server` includes an in-memory password-history demo using Argon2 for testing only; it is not persistent and is for local development.
+
+
+Contact / notes
+
+Student: Michael Chretien
+ID: 
 
 ---
 
-If you want, I will:
-- Open a PR with this branch (I can prepare a PR description for you), or
-- Create a `docs/CONTRIBUTING.md` and a short index page for the docs with links grouped by topic.
+_This README was updated automatically to reflect the current workspace state._
 
-Tell me which of these you'd like me to do next.
+````
