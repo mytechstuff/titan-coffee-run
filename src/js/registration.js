@@ -8,16 +8,18 @@ import { User, UserStorage } from './userStorage.js';
   Below are the suggestions made in the last review of this module. Please mark each
   item with APPROVED, REJECTED, or PENDING and optionally add a short reason.
 
-  1) Server-side validation (always enforce on server) .................. [PENDING]
-  2) Network error handling: handle fetch errors and HTTP statuses ........ [PENDING]
-  3) Secure transmission: use TLS/HSTS .................................. [APPROVED]
-  4) Password handling: never persist passwords client-side ................ [APPROVED]
-  5) Rate limiting and abuse detection (server-side) ..................... [PENDING]
-  6) Accessibility: announce async server errors and move focus to errors .. [PENDING]
-  7) XSS/Injection: sanitize server-returned HTML ........................ [PENDING]
-  8) StorageManager: guard storage quotas & JSON schema (try/catch) ...... [APPROVED]
-  9) Unit tests: add tests for validator and storage manager .............. [PENDING]
- 10) Logging/observability: client-side non-sensitive telemetry hooks ...... [PENDING]
+   1) Server-side validation (always enforce on server) .................. [PENDING]
+   2) Network error handling: handle fetch errors and HTTP statuses ........ [PENDING]
+   3) Secure transmission: use TLS/HSTS .................................. [APPROVED]
+   4) Password handling: never persist passwords client-side ................ [APPROVED]
+   5) Rate limiting and abuse detection (server-side) ..................... [PENDING]
+   6) Accessibility: announce async server errors and move focus to errors .. [PARTIALLY APPLIED]
+      - Note: form uses `aria-live` and sets `aria-invalid` on controls; further
+        improvements (focus management, announcements for server errors) remain.
+   7) XSS/Injection: sanitize server-returned HTML ........................ [PENDING]
+   8) StorageManager: guard storage quotas & JSON schema (try/catch) ...... [APPROVED]
+   9) Unit tests: add tests for validator and storage manager .............. [PENDING]
+  10) Logging/observability: client-side non-sensitive telemetry hooks ...... [PENDING]
 
   Notes:
   - I pre-filled reasonable defaults for items that were already applied in this
@@ -38,6 +40,7 @@ export class FormValidator {
    * @param {number} [options.minScore=3] - Minimum password score required.
    * @throws {Error} Throws if `form` is falsy.
    */
+  // Constructor — bind form elements and initialize validator
   constructor(form, options = {}){
     if (!form) throw new Error('Form element required');
     this.form = form;
@@ -77,6 +80,7 @@ export class FormValidator {
    * @returns {boolean} True if email passes validation or the email field is absent.
    */
   validateEmail(){
+    // simple presence + regex check, updates UI
     if (!this.email){
       console.warn('validateEmail: no email field present — skipping');
       return true;
@@ -100,6 +104,7 @@ export class FormValidator {
    * @returns {number} Score in range 0..6.
    */
   calculatePasswordScore(value){
+    // compute 0..6 score from length and character classes
     let score = 0;
     if (!value) return score;
     if (value.length >= 8) score += 1;
@@ -117,6 +122,7 @@ export class FormValidator {
    * @returns {string} One of 'Weak', 'Medium', 'Strong'.
    */
   getPasswordLabel(score){
+    // map numeric score -> label
     if (score >= 5) return 'Strong';
     if (score >= 3) return 'Medium';
     return 'Weak';
@@ -127,6 +133,7 @@ export class FormValidator {
    * @returns {boolean} True if password score >= minScore or password field is absent.
    */
   validatePassword(){
+    // update UI strength bar/label and return pass/fail
     if (!this.pwd){
       console.warn('validatePassword: no password field found — skipping');
       return true;
@@ -147,6 +154,7 @@ export class FormValidator {
    * @returns {boolean} True if match OK, false otherwise (or if confirm field absent returns true).
    */
   validateConfirmMatch(){
+    // ensure password and confirm fields match
     if (!this.confirm){
       console.warn('validateConfirmMatch: no confirm field — skipping');
       return true;
@@ -172,6 +180,7 @@ export class FormValidator {
    * @returns {boolean} True if both present or fields missing (conservative pass).
    */
   validateNames(){
+    // basic non-empty check for name fields
     if (!this.firstName || !this.lastName){
       console.warn('validateNames: name fields missing — skipping');
       return true;
@@ -186,6 +195,7 @@ export class FormValidator {
    * @returns {boolean} True if form passes all checks.
    */
   isFormValid(){
+    // run all validators and enable/disable the submit button
     const emailOK = this.validateEmail();
     const pwdOK = this.validatePassword();
     const matchOK = this.validateConfirmMatch();
@@ -205,6 +215,7 @@ export class FormValidator {
    * @param {string|null} [message] - Error message text.
    */
   _setInvalid(control, messageTarget = null, message = null){
+    // set ARIA + show message
     if (!control) return;
     control.setAttribute('aria-invalid', 'true');
     if (messageTarget && message) messageTarget.textContent = message;
@@ -217,6 +228,7 @@ export class FormValidator {
    * @param {HTMLElement|null} [messageTarget] - Element to clear message.
    */
   _clearInvalid(control, messageTarget = null){
+    // clear ARIA + message
     if (!control) return;
     control.removeAttribute('aria-invalid');
     if (messageTarget) messageTarget.textContent = '';
@@ -228,6 +240,7 @@ export class FormValidator {
    * @param {boolean} enabled
    */
   _toggleSubmit(enabled){
+    // update button attributes to reflect enabled state
     if (!this.registerBtn) return;
     if (enabled){
       this.registerBtn.disabled = false;
@@ -244,6 +257,7 @@ export class FormValidator {
    * @private
    */
   _bindEvents(){
+    // wire input/change/submit handlers and small debouncing
     // Lightweight debouncing for email to avoid excessive validation on each keystroke
     const debounce = (fn, wait=150) => {
       let t;
