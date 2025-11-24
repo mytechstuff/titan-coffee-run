@@ -35,6 +35,10 @@ function constantTimeEquals(a, b) {
 }
 
 // Simple demo users. In production you'd verify on server.
+// SECURITY NOTE: These demo credentials exist for local/demo use only.
+// Plaintext passwords here are a teaching convenience and MUST NOT be used
+// in production. Authentication should always be performed on the server.
+// See docs/securty_review.md#demo-credentials--client-side-authentication-checks
 const DEMO_USERS = {
   'demo@example.com': { password: 'DemoPass123', id: 'user-demo' }
 };
@@ -95,6 +99,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
           // admin password for demo: test123 (store state in localStorage for simplicity)
           if (password === 'test123') {
             recordLoginAttempt(email, { success: true });
+            // SECURITY NOTE: Persisting `adminLoggedIn` in `localStorage` is
+            // insecure (client-controlled). This is only for local/demo UX.
+            // Do not rely on it for authorization. See docs/securty_review.md#client-side-storage
+            // for more information.
             try { localStorage.setItem('adminLoggedIn', 'true'); } catch (e) { console.warn('failed to persist admin login', e); }
             if (msg) msg.textContent = 'Admin signed in — redirecting to sales...';
             setTimeout(()=> location.replace('sales.html'), 300);

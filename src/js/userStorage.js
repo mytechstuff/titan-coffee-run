@@ -153,6 +153,11 @@ export class User {
     this.email = String(email || '').trim();
     // For demo only: storing encoded password is optional and discouraged in production
     this.passwordBase64 = passwordBase64; // may be undefined
+    // SECURITY NOTE: The `passwordBase64` field is supported for demo/education only.
+    // Base64 is NOT encryption. Storing passwords (even encoded) in localStorage
+    // exposes them to any script running on the page and to anyone with access
+    // to the device. See docs/securty_review.md#client-side-storage and
+    // docs/securty_review.md#base64-encoding-used-as-encryption for details.
     // passwordSet is a safer flag indicating the user created/set a password without storing it
     this.passwordSet = !!passwordSet;
     this.version = version;
@@ -367,6 +372,12 @@ export class UserStorage {
         },
         payload: raw,
       };
+      // SECURITY NOTE: The backup string wraps the entire payload and is
+      // Base64-encoded for convenience. Backups can contain user data and
+      // (for demos) might contain encoded passwords. Treat backups as
+      // sensitive artifacts: store them securely and avoid including
+      // secret material. See docs/securty_review.md#backup--restore-file-handling
+      // for recommendations.
       const backupString = base64Encode(JSON.stringify(envelope));
       // Suggest a filename that includes the app and date for convenience
       const date = new Date().toISOString().slice(0,10).replace(/-/g,'');

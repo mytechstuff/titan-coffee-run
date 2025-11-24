@@ -250,6 +250,10 @@
   window.playAnimationSimple = playAnimation;
 
   // Initialize: draw with full bars if admin, otherwise do nothing (page-level auth controls apply)
+  // SECURITY NOTE: Checking `localStorage.getItem('adminLoggedIn')` is not a
+  // secure authorization check. Any script or user can modify localStorage.
+  // This is only for demo UX; do not rely on this for access control.
+  // See docs/securty_review.md#client-side-storage for details.
   try{ if (localStorage.getItem('adminLoggedIn') === 'true'){ animationProgress = 1; drawChart(); } }catch(e){ animationProgress = 1; drawChart(); }
   // Wire the page-level Reset button (if present) so it resets this simple chart.
   try{

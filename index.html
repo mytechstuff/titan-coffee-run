@@ -127,6 +127,11 @@
             try {
                 const salesLink = document.getElementById('sales-link');
                 if (!salesLink) return;
+                /* SECURITY NOTE: This check reads `adminLoggedIn` from localStorage.
+                   This client-side flag is easily modified and should not be used
+                   for real authorization. The server must validate and return
+                   a secure indicator (e.g. server-side session or signed token).
+                   See docs/securty_review.md#client-side-storage for details. */
                 const isAdmin = localStorage.getItem('adminLoggedIn') === 'true';
                 salesLink.style.display = isAdmin ? '' : 'none';
             } catch(e) { /* ignore in older browsers */ }

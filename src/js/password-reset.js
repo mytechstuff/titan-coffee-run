@@ -23,6 +23,12 @@ function validateEmail(value){
   return '';
 }
 
+// SECURITY NOTE: `fakeRequest` is a pedagogical placeholder only. Do NOT
+// copy this into production server code. Password-reset requests must be
+// handled by the server which should generate single-use, time-limited tokens,
+// store only token hashes, rate-limit requests, and always return a generic
+// response to avoid account enumeration. See docs/securty_review.md#password-reset-flow
+// and docs/securty_review.md#client-side-storage for details.
 async function fakeRequest(email){
   // Simulate network latency and a generic success response.
   // Replace this with a `fetch('/api/password-reset', { method:'POST', body: JSON.stringify({email}) })`

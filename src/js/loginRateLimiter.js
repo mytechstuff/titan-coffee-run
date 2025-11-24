@@ -2,7 +2,12 @@
  * loginRateLimiter.js
  *
  * Client-side login attempt rate limiter using localStorage timestamps.
- * This is a UX layer only and must be backed by server-side limits for security.
+ *
+ * SECURITY NOTE: This client-side limiter is a UX convenience only and is
+ * trivially tamperable (users or malicious scripts can clear/modify localStorage).
+ * Do NOT rely on it for security-critical throttling — enforce limits on the
+ * server (IP + account heuristics) and use the client limiter only to improve UX.
+ * See docs/securty_review.md#client-side-rate-limiting-is-tamperable for details.
  */
 const STORAGE_PREFIX = 'tcr_login_attempts:';
 const DEFAULT_OPTIONS = {

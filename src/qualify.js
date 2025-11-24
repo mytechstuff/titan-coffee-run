@@ -245,7 +245,14 @@ export function validateAllFields(data = {}) {
 
     function showSummary(msgs){
       const s = document.getElementById('validation-summary');
-      if(!s) return; s.hidden = !msgs.length; s.innerHTML = msgs.length ? '<ul>'+msgs.map(m=>'<li>'+m+'</li>').join('')+'</ul>' : '';
+      if(!s) return;
+      s.hidden = !msgs.length;
+      // SECURITY NOTE: This code uses `innerHTML` to insert messages.
+      // If any message content is derived from user input, this can lead to
+      // XSS. Prefer constructing nodes via `createElement` and setting
+      // `textContent`, or escape values before inserting into `innerHTML`.
+      // See docs/securty_review.md#innerhtml-assignment-without-escaping-xss-risk
+      s.innerHTML = msgs.length ? '<ul>'+msgs.map(m=>'<li>'+m+'</li>').join('')+'</ul>' : '';
     }
 
     function showDecision(approved, income){

@@ -387,6 +387,11 @@ export default function initRegistration(){
       backupBtn.addEventListener('click', async ()=>{
         try{
           const result = UserStorage.backup();
+          // SECURITY NOTE: backup() produces a Base64 envelope that may contain
+          // all stored user data. Backups are sensitive and should not include
+          // passwords in production. See docs/securty_review.md#backup--restore-file-handling
+          // for guidance; this comment intentionally points reviewers to the
+          // security findings rather than changing behavior here.
           if (!result){
             if (backupStatus) backupStatus.textContent = 'No stored user data to backup.';
             return;
