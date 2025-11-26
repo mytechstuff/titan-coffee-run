@@ -2,13 +2,19 @@
 // Lightweight cart logic for Titan Coffee Run demo.
 // Holds cart state in sessionStorage and exposes simple API for add/remove/update.
 //
-// This file defines two small domain classes: `Product` and `OrderItem`.
-// - `Product` encapsulates the canonical product data (id, name, basePrice, img).
-//   Keeping a Product class simplifies serialization, pricing calculations,
-//   and makes it easier to extend product metadata later (e.g., SKU, calories).
-// - `OrderItem` represents a single line in the cart and records the product,
-//   chosen size (S/M/L), quantity, and a timestamp/date for when the item was
-//   added. Storing the date helps auditing and order history features.
+// Domain classes:
+// - Product: canonical product data (id, name, basePrice, img). Centralizing
+//   product information makes pricing and serialization consistent.
+// - OrderItem: a cart line (product + size + qty + date). The `date` field
+//   provides a timestamp for order history and auditing.
+//
+// Constants / variables:
+// - `CART_KEY`: storage key in `sessionStorage`. Using a single key centralizes
+//   cart persistence and makes it easier to update the format when needed.
+//
+// Rationale: sessionStorage is used so the cart survives page reloads during
+// a session but is cleared when the browser/tab is closed. For multi-device
+// persistence, move storage to the server.
 
 const CART_KEY = 'tcr_demo_cart_v1';
 
@@ -41,6 +47,10 @@ export class OrderItem {
 }
 
 function loadCart(){
+  /**
+   * Loads the cart from sessionStorage and returns it as an object.
+   * If the cart is empty or invalid, returns an empty items array.
+   */
   try{
     const raw = sessionStorage.getItem(CART_KEY);
     if (!raw) return { items: [] };
@@ -51,22 +61,41 @@ function loadCart(){
   }catch(e){ return { items: [] }; }
 }
 
+/**
+ * saveCart
+ * Persist the given cart object into sessionStorage as JSON.
+ */
 function saveCart(cart){
   try{ sessionStorage.setItem(CART_KEY, JSON.stringify(cart)); }catch(e){}
 }
 
+/**
+ * priceForSize
+ * Compute the price for a given size using simple multipliers so prices are
+ * predictable and easy to explain to students (S=1.0, M=1.25, L=1.5).
+ */
 function priceForSize(basePrice, size){
   // size: 'S'|'M'|'L' multipliers
   const mult = size === 'M' ? 1.25 : size === 'L' ? 1.5 : 1.0;
   return Math.round(basePrice * mult * 100) / 100;
 }
 
+/**
+ * Cart API
+ * Methods operate on the stored cart and return the updated cart object.
+ */
 export const Cart = {
   /**
    * Add an item to the cart. Accepts either a Product-like object or a Product
    * instance and returns the updated cart. We normalize data into OrderItem
    * objects for storage.
    * @param {{ id, name, basePrice }|Product} product
+   */
+  /**
+   * addItem
+   * Add or merge a product into the cart. Accepts a Product or product-like
+   * object and normalizes it into an OrderItem for storage. Returns the
+   * updated cart.
    */
   addItem(product){
     const cart = loadCart();
@@ -80,6 +109,11 @@ export const Cart = {
     saveCart(cart);
     return cart;
   },
+  /**
+   * updateQty
+   * Update the quantity of a specific product+size in the cart; removes the
+   * item when qty <= 0. Returns the updated cart object.
+   */
   updateQty(id, size, qty){
     const cart = loadCart();
     const idx = cart.items.findIndex(i=> i.product && i.product.id === id && i.size === size);
@@ -90,6 +124,10 @@ export const Cart = {
     }
     return cart;
   },
+  /**
+   * removeItem
+   * Remove a product+size line from the cart entirely.
+   */
   removeItem(id, size){
     const cart = loadCart();
     cart.items = cart.items.filter(i=> !(i.product && i.product.id === id && i.size === size));
@@ -98,6 +136,12 @@ export const Cart = {
   },
   clear(){ saveCart({ items: [] }); return { items: [] }; },
   getCart(){ return loadCart(); },
+  /**
+   * getTotals
+   * Compute subtotal, tax, and total for the current cart. Tax is a simple
+   * fixed rate (8%) for demo purposes; in production this should come from
+   * server-side pricing/tax services.
+   */
   getTotals(){
     const cart = loadCart();
     let subtotal = 0;

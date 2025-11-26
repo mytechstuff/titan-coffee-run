@@ -8,7 +8,11 @@
   <style>
     .menu-wrap{ max-width:900px; margin:24px auto; padding:16px }
     .menu-grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:12px }
-    .menu-card{ background:#fff;padding:12px;border-radius:8px }
+    .menu-card{ background:#ffffff;padding:12px;border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.04) }
+    /* Cart box uses a warm background to stand out from product cards */
+    .cart-box{ background:#fff8e6; padding:12px; border-radius:8px; border:1px solid rgba(0,0,0,0.04) }
+    .menu-card h3{ margin:8px 0 6px }
+    .menu-card .price{ font-weight:700; margin-top:6px }
   </style>
 </head>
 <body>
@@ -32,7 +36,7 @@
 
   <main id="main-content">
     <div class="menu-wrap">
-      <h1>Our Menu (Protected Demo)</h1>
+      <h1>Our Menu Order Page</h1>
       <p class="note">This demo page requires signing in. If you are redirected to login, sign in with the demo account and you'll return here.</p>
 
       <div id="menuArea">
@@ -129,8 +133,8 @@
 
       menuArea.appendChild(grid);
 
-      // Cart summary area
-      const cartBox = document.createElement('aside'); cartBox.style.marginTop='16px';
+      // Cart summary area: use a distinct background so it stands out from product cards
+      const cartBox = document.createElement('aside'); cartBox.className = 'cart-box'; cartBox.style.marginTop='16px';
       cartBox.innerHTML = '<h3>Your Cart</h3><div id="cartSummary">Cart is empty.</div>';
       menuArea.appendChild(cartBox);
       // render saved cart
