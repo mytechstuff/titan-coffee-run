@@ -43,32 +43,99 @@
 
   <script type="module">
     import SessionManager from './src/js/sessionManager.js';
+    import { Cart, renderCartInto } from './src/js/cart.js';
+
     (function(){
       const sm = new SessionManager();
       const t = sm.getToken();
-      if (!t) {
-        sessionStorage.setItem('intended', location.pathname + location.search);
-        location.replace('login.html');
-        return;
-      }
-      // Use SessionManager to validate token
-      const check = sm.validateToken(t);
-      if (!check.valid) {
-        sessionStorage.setItem('intended', location.pathname + location.search);
-        location.replace('login.html');
-        return;
-      }
+      const loggedIn = !!t && sm.validateToken(t).valid;
+
+      const products = [
+        { id: 'latte', name: 'Titan Latte', desc: 'Our signature latte — rich and smooth.', basePrice: 4.25, img: 'public/assets/img/carousel-1.jpg' },
+        { id: 'nitro', name: 'Nitro Cold Brew', desc: 'Bold, cold, and nitrogen-infused.', basePrice: 4.75, img: 'public/assets/img/carousel-2.jpg' },
+        { id: 'americano', name: 'Americano', desc: 'Espresso with hot water — simple and classic.', basePrice: 3.00, img: 'public/assets/img/carousel-3.jpg' },
+        { id: 'almond', name: 'Almond Milk Capp', desc: 'Foamy and dairy-free option.', basePrice: 4.50, img: 'public/assets/img/carousel-4.png' },
+        { id: 'mocha', name: 'Chocolate Mocha', desc: 'Velvety mocha with dark chocolate.', basePrice: 4.95, img: 'public/assets/img/titanquad1.jpg' },
+        { id: 'coldbrew', name: 'House Cold Brew', desc: 'Slow-steeped for smooth flavor.', basePrice: 3.95, img: 'public/assets/img/banner-hero.jpg' }
+      ];
 
       const menuArea = document.getElementById('menuArea');
-      menuArea.innerHTML = `
-        <div class="menu-grid">
-          <div class="menu-card"><h3>Titan Latte</h3><p>Our signature latte — rich and smooth.</p><strong>$4.25</strong></div>
-          <div class="menu-card"><h3>Nitro Cold Brew</h3><p>Bold, cold, and nitrogen-infused.</p><strong>$4.75</strong></div>
-          <div class="menu-card"><h3>Americano</h3><p>Espresso with hot water — simple and classic.</p><strong>$3.00</strong></div>
-          <div class="menu-card"><h3>Almond Milk Capp</h3><p>Foamy and dairy-free option.</p><strong>$4.50</strong></div>
-        </div>
-        <p style="margin-top:1rem"><a href="protected.html">Go to protected test page</a></p>
-      `;
+
+      function el(tag, cls, inner){ const e = document.createElement(tag); if (cls) e.className = cls; if (inner !== undefined) e.innerHTML = inner; return e; }
+
+      const grid = el('div','menu-grid');
+      products.forEach(p=>{
+        const card = el('div','menu-card');
+        const img = document.createElement('img'); img.src = p.img; img.alt = p.name; img.style.width = '100%'; img.style.height='140px'; img.style.objectFit='cover'; img.style.borderRadius='6px';
+        card.appendChild(img);
+        const h = el('h3','',''+p.name); card.appendChild(h);
+        const d = el('p','',p.desc); card.appendChild(d);
+        const price = el('div','price',`$${p.basePrice.toFixed(2)}`); card.appendChild(price);
+
+        // Size selector & order controls (only visible when logged in)
+        const controls = el('div','order-controls');
+        // sizes
+        const sizes = el('div','sizes');
+        ['S','M','L'].forEach((s, idx)=>{
+          const lbl = document.createElement('label');
+          lbl.style.marginRight = '8px';
+          const rb = document.createElement('input'); rb.type='radio'; rb.name = 'size-'+p.id; rb.value = s; if (s==='M') rb.checked = true; lbl.appendChild(rb); lbl.appendChild(document.createTextNode(' '+s));
+          sizes.appendChild(lbl);
+        });
+        controls.appendChild(sizes);
+
+        // quantity controls
+        const qtyWrap = el('div','qty-wrap');
+        const dec = el('button','dec','-'); dec.type='button';
+        const qty = el('span','qty','0'); qty.style.margin='0 8px';
+        const inc = el('button','inc','+'); inc.type='button';
+        qtyWrap.appendChild(dec); qtyWrap.appendChild(qty); qtyWrap.appendChild(inc);
+        controls.appendChild(qtyWrap);
+
+        const addBtn = el('button','add','Add to cart'); addBtn.type='button';
+        controls.appendChild(addBtn);
+
+        // Hide controls if not logged in — show a sign-in prompt instead
+        if (!loggedIn){
+          controls.style.display = 'none';
+          const signin = el('p','', '<a href="login.html">Sign in</a> to order');
+          card.appendChild(signin);
+        } else {
+          card.appendChild(controls);
+        }
+
+        // Hook controls when logged in
+        if (loggedIn){
+          let curQty = 0;
+          inc.addEventListener('click', ()=>{ curQty++; qty.textContent = String(curQty); });
+          dec.addEventListener('click', ()=>{ curQty = Math.max(0, curQty-1); qty.textContent = String(curQty); });
+          addBtn.addEventListener('click', ()=>{
+            const checked = card.querySelector('input[type=radio]:checked');
+            const size = checked ? checked.value : 'M';
+            const q = Math.max(1, Number(qty.textContent) || 1);
+            Cart.addItem({ id: p.id, name: p.name, basePrice: p.basePrice, size, qty: q });
+            // reset qty
+            curQty = 0; qty.textContent = '0';
+            // update cart UI if present
+            const cartEl = document.getElementById('cartSummary');
+            if (cartEl) renderCartInto(cartEl);
+            addBtn.textContent = 'Added ✓';
+            setTimeout(()=> addBtn.textContent = 'Add to cart', 900);
+          });
+        }
+
+        grid.appendChild(card);
+      });
+
+      menuArea.appendChild(grid);
+
+      // Cart summary area
+      const cartBox = document.createElement('aside'); cartBox.style.marginTop='16px';
+      cartBox.innerHTML = '<h3>Your Cart</h3><div id="cartSummary">Cart is empty.</div>';
+      menuArea.appendChild(cartBox);
+      // render saved cart
+      renderCartInto(document.getElementById('cartSummary'));
+
     })();
   </script>
 </body>
