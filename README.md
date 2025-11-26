@@ -108,3 +108,7 @@ _This README was updated automatically to reflect the current workspace state._
 Note: these behaviors are for demonstration only. Client-side storage and client-only payment simulation are insecure for production.
 
 ```
+
+## Small inline styles
+
+- The `checkout.html` page includes a very small inline CSS block used only by that page to keep the demo focused and self-contained. The inline rules are intentionally minimal (layout tweaks for the checkout column) and are documented in the page header explaining that they may be moved to `src/styles/main.css` later. Keeping a few page-specific styles inline speeds teaching/debugging and avoids large refactors in class exercises.

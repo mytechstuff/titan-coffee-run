@@ -23,6 +23,10 @@ Notes:
 - These behaviors are intentionally client-side and suitable for demos; they are NOT secure for production. Move cart persistence and order processing server-side for any real deployment.
 - The receipt is only shown when the user clicks `View Receipt` — the checkout flow does not auto-redirect to the receipt page to avoid unexpected navigation.
 
+### Inline CSS note (checkout.html)
+
+- `checkout.html` contains a small, inline `<style>` block near the top of the file. The rules are intentionally inline because they are page-scoped, minimal, and make the demo easier to reason about during development and learning exercises. If you prefer, these rules can be moved to `src/styles/main.css` for production or broader reuse.
+
 
 Titan Coffee Run is a small, static front-end scaffold for a coffee shop promo site. It includes a lightweight hero area, a small informational grid, and a simple, dependency-free image carousel/banner rotator that auto-rotates every 3 seconds. The project is intentionally minimal so it can be used as a starting point for a simple marketing site or as a template for a slightly larger front-end app.
 

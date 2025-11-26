@@ -33,6 +33,8 @@
 
     <div class="actions">
       <a href="menu.html" class="btn">Back to Menu</a>
+      <!-- Download JSON of last saved receipt for demo/debugging -->
+      <button id="downloadJsonBtn" class="btn" type="button">Download JSON</button>
     </div>
   </main>
 
@@ -85,6 +87,27 @@
       area.appendChild(header);
       area.appendChild(table);
       area.appendChild(totalsBox);
+
+      // Wire the Download JSON button: save the stored receipt as a .json file
+      const dl = document.getElementById('downloadJsonBtn');
+      if (dl){
+        dl.addEventListener('click', ()=>{
+          try{
+            const data = localStorage.getItem('tcr_last_order');
+            if (!data) { alert('No receipt found to download.'); return; }
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const filename = 'tcr_receipt_' + (JSON.parse(data).id || Date.now()) + '.json';
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+          }catch(e){ console.error(e); alert('Failed to create download.'); }
+        });
+      }
 
     })();
   </script>

@@ -6,6 +6,11 @@
   <title>Checkout — Titan Coffee Run (Demo)</title>
   <link rel="stylesheet" href="./src/styles/main.css">
   <style>
+    /* Small inline CSS: kept here intentionally because the checkout page
+       contains only a few layout tweaks used by this single page (checkout).
+       Moving these rules to `src/styles/main.css` is fine later, but keeping
+       this tiny block inline keeps the demo self-contained and easier to
+       reason about during exercises and teaching. */
     .checkout-wrap{ max-width:980px; margin:28px auto; padding:16px }
     .checkout-grid{ display:flex; gap:18px }
     .checkout-left{ flex:1 }
