@@ -111,21 +111,44 @@
         // Hook controls when logged in
         if (loggedIn){
           let curQty = 0;
-          inc.addEventListener('click', ()=>{ curQty++; qty.textContent = String(curQty); });
-          dec.addEventListener('click', ()=>{ curQty = Math.max(0, curQty-1); qty.textContent = String(curQty); });
-          addBtn.addEventListener('click', ()=>{
-            const checked = card.querySelector('input[type=radio]:checked');
-            const size = checked ? checked.value : 'M';
-            const q = Math.max(1, Number(qty.textContent) || 1);
-            Cart.addItem({ id: p.id, name: p.name, basePrice: p.basePrice, size, qty: q });
-            // reset qty
-            curQty = 0; qty.textContent = '0';
-            // update cart UI if present
-            const cartEl = document.getElementById('cartSummary');
-            if (cartEl) renderCartInto(cartEl);
-            addBtn.textContent = 'Added ✓';
-            setTimeout(()=> addBtn.textContent = 'Add to cart', 900);
-          });
+            // increment: if item exists in cart, increase it there; otherwise increase local curQty
+            inc.addEventListener('click', ()=>{
+              const checked = card.querySelector('input[type=radio]:checked');
+              const size = checked ? checked.value : 'M';
+              const existing = Cart.getCart().items.find(i=> i.product && i.product.id === p.id && i.size === size);
+              if (existing){
+                Cart.updateQty(p.id, size, (existing.qty||0) + 1);
+                renderCartInto(document.querySelector('.cart-box'));
+              } else {
+                curQty++; qty.textContent = String(curQty);
+              }
+            });
+            // decrement: if item exists in cart, decrement it; otherwise decrement local curQty
+            dec.addEventListener('click', ()=>{
+              const checked = card.querySelector('input[type=radio]:checked');
+              const size = checked ? checked.value : 'M';
+              const existing = Cart.getCart().items.find(i=> i.product && i.product.id === p.id && i.size === size);
+              if (existing){
+                const newQ = Math.max(0, (existing.qty||0) - 1);
+                Cart.updateQty(p.id, size, newQ);
+                renderCartInto(document.querySelector('.cart-box'));
+              } else {
+                curQty = Math.max(0, curQty-1); qty.textContent = String(curQty);
+              }
+            });
+            addBtn.addEventListener('click', ()=>{
+              const checked = card.querySelector('input[type=radio]:checked');
+              const size = checked ? checked.value : 'M';
+              const q = Math.max(1, Number(qty.textContent) || 1);
+              Cart.addItem({ id: p.id, name: p.name, basePrice: p.basePrice, size, qty: q });
+              // reset qty
+              curQty = 0; qty.textContent = '0';
+              // update cart UI if present
+              const cartBoxEl = document.querySelector('.cart-box');
+              if (cartBoxEl) renderCartInto(cartBoxEl);
+              addBtn.textContent = 'Added ✓';
+              setTimeout(()=> addBtn.textContent = 'Add to cart', 900);
+            });
         }
 
         grid.appendChild(card);
@@ -135,10 +158,27 @@
 
       // Cart summary area: use a distinct background so it stands out from product cards
       const cartBox = document.createElement('aside'); cartBox.className = 'cart-box'; cartBox.style.marginTop='16px';
-      cartBox.innerHTML = '<h3>Your Cart</h3><div id="cartSummary">Cart is empty.</div>';
+      // Use a two-column layout: left = items, right = totals and actions
+      cartBox.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="flex:1;margin-right:12px">
+            <h3>Your Cart</h3>
+            <div id="cartItems">Cart is empty.</div>
+          </div>
+          <div style="width:220px">
+            <h3>Checkout</h3>
+            <div id="cartTotals"></div>
+            <div style="margin-top:8px">
+              <button id="clearCartBtn" type="button">Clear Cart</button>
+            </div>
+          </div>
+        </div>
+      `;
       menuArea.appendChild(cartBox);
       // render saved cart
-      renderCartInto(document.getElementById('cartSummary'));
+      renderCartInto(cartBox);
+      const clearBtn = document.getElementById('clearCartBtn');
+      if (clearBtn) clearBtn.addEventListener('click', ()=>{ Cart.clear(); renderCartInto(cartBox); });
 
     })();
   </script>

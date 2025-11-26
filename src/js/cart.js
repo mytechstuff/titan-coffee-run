@@ -161,21 +161,36 @@ export const Cart = {
 export function renderCartInto(container){
   if (!container) return;
   const cart = loadCart();
-  container.innerHTML = '';
-  if (!cart.items.length){ container.textContent = 'Cart is empty.'; return; }
-  const ul = document.createElement('ul');
+  // If caller provided a split layout with `cartItems` and `cartTotals` nodes,
+  // render items and totals into those separately. This allows placing totals
+  // to the right of the item list for clarity.
+  const itemsEl = container.querySelector('#cartItems') || container;
+  const totalsEl = container.querySelector('#cartTotals') || container;
+  itemsEl.innerHTML = '';
+  if (!cart.items.length){ itemsEl.textContent = 'Cart is empty.'; totalsEl.innerHTML = ''; return; }
+
+  const ul = document.createElement('ul'); ul.className = 'cart-items-list';
   cart.items.forEach(it=>{
-    const li = document.createElement('li');
+    const li = document.createElement('li'); li.className = 'cart-item-row';
     const name = (it.product && it.product.name) || 'Item';
     const linePrice = ((priceForSize((it.product && it.product.basePrice)||0, it.size) * it.qty) || 0);
-    li.textContent = `${name} (${it.size}) × ${it.qty} — $${linePrice.toFixed(2)}`;
+    // structure: [qty] [name] [size] [linePrice]
+    const qtySpan = document.createElement('span'); qtySpan.className = 'ci-qty'; qtySpan.textContent = String(it.qty);
+    const nameSpan = document.createElement('span'); nameSpan.className = 'ci-name'; nameSpan.textContent = name;
+    const sizeSpan = document.createElement('span'); sizeSpan.className = 'ci-size'; sizeSpan.textContent = it.size;
+    const priceSpan = document.createElement('span'); priceSpan.className = 'ci-price'; priceSpan.textContent = '$' + linePrice.toFixed(2);
+    li.appendChild(qtySpan); li.appendChild(nameSpan); li.appendChild(sizeSpan); li.appendChild(priceSpan);
     ul.appendChild(li);
   });
-  container.appendChild(ul);
+  itemsEl.appendChild(ul);
+
+  // totals
   const totals = Cart.getTotals();
-  const p = document.createElement('p');
-  p.textContent = `Subtotal: $${totals.subtotal.toFixed(2)} • Tax: $${totals.tax.toFixed(2)} • Total: $${totals.total.toFixed(2)}`;
-  container.appendChild(p);
+  totalsEl.innerHTML = '';
+  const subt = document.createElement('div'); subt.textContent = 'Subtotal: $' + totals.subtotal.toFixed(2);
+  const tax = document.createElement('div'); tax.textContent = 'Tax: $' + totals.tax.toFixed(2);
+  const tot = document.createElement('div'); tot.style.fontWeight = '700'; tot.textContent = 'Total: $' + totals.total.toFixed(2);
+  totalsEl.appendChild(subt); totalsEl.appendChild(tax); totalsEl.appendChild(tot);
 }
 
 // expose for debugging
