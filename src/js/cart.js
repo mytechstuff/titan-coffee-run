@@ -11,7 +11,19 @@
 // Constants / variables:
 // - `CART_KEY`: storage key in `sessionStorage`. Using a single key centralizes
 //   cart persistence and makes it easier to update the format when needed.
-//
+
+// Storage details:
+// - This demo stores the cart under the `CART_KEY` using the browser's
+//   `sessionStorage` API. The stored value is JSON with a simple shape:
+//     { items: [ { product: { id,name,basePrice,img }, size, qty, date }, ... ] }
+// - We use `sessionStorage` so cart data survives page reloads during the
+//   current browser tab session but is cleared when the tab/window closes.
+// - Important: client-side storage is purely a UX convenience and is
+//   tamperable. 
+// - `localStorage` could be used to
+//   persist across browser sessions, but it is equally insecure for sensitive
+//   operations. Treat this implementation as a demo only.
+
 // Rationale: sessionStorage is used so the cart survives page reloads during
 // a session but is cleared when the browser/tab is closed. For multi-device
 // persistence, move storage to the server.

@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Checkout — Titan Coffee Run (Demo)</title>
+  <link rel="stylesheet" href="./src/styles/main.css">
+  <style>
+    .checkout-wrap{ max-width:980px; margin:28px auto; padding:16px }
+    .checkout-grid{ display:flex; gap:18px }
+    .checkout-left{ flex:1 }
+    .checkout-right{ width:320px; background:#fff8e6; padding:12px; border-radius:8px }
+    .form-row{ margin-bottom:10px }
+    label{ display:block; font-weight:600; margin-bottom:4px }
+    input[type=text], input[type=email], input[type=tel]{ width:100%; padding:8px; border:1px solid #ddd; border-radius:4px }
+    .btn{ padding:8px 12px; border-radius:6px; border:0; cursor:pointer }
+    .btn-primary{ background:#0b6; color:#022 }
+    .btn-secondary{ background:#eee }
+    .order-result{ padding:10px; margin-top:12px; border-radius:6px }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/" class="brand">Titan Coffee Run</a>
+    <nav><a href="/menu.html">Menu</a> | <a href="/login.html">Sign in</a></nav>
+  </header>
+
+  <main class="checkout-wrap">
+    <h1>Checkout</h1>
+    <p>Review your order and provide contact details for the receipt.</p>
+    <div class="checkout-grid">
+      <div class="checkout-left">
+        <h3>Your Cart</h3>
+        <div id="cartItems">Loading cart…</div>
+      </div>
+      <aside class="checkout-right">
+        <h3>Contact & Payment</h3>
+        <div class="form-row">
+          <label for="custName">Full name</label>
+          <input id="custName" type="text" placeholder="Jane Doe">
+        </div>
+        <div class="form-row">
+          <label for="custEmail">Email</label>
+          <input id="custEmail" type="email" placeholder="jane@example.com">
+        </div>
+        <div class="form-row">
+          <label for="custPhone">Phone</label>
+          <input id="custPhone" type="tel" placeholder="(555) 555-5555">
+        </div>
+        <div id="checkoutTotals" style="margin-top:8px"></div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+          <button id="redoOrderBtn" class="btn btn-secondary" type="button">Redo Order</button>
+          <button id="payNowBtn" class="btn btn-primary" type="button">Final Pay Now</button>
+          <!-- Hidden until payment completes -->
+          <button id="viewReceiptBtn" class="btn" type="button" style="display:none">View Receipt</button>
+        </div>
+        <div id="orderResult" class="order-result" role="status" aria-live="polite" style="display:none"></div>
+      </aside>
+    </div>
+  </main>
+
+  <script type="module">
+    import { Cart, renderCartInto } from './src/js/cart.js';
+
+    (function(){
+      const cartItemsEl = document.getElementById('cartItems');
+      const totalsEl = document.getElementById('checkoutTotals');
+      const resultEl = document.getElementById('orderResult');
+
+      // Render cart table and totals using the shared renderer, then copy the
+      // produced HTML into the page. We use a temporary container so we can
+      // place the items in the left column and the totals in the right column.
+      function renderCartToPage(){
+        const temp = document.createElement('div');
+        temp.innerHTML = '<div id="cartItems"></div><div id="cartTotals" style="margin-top:8px"></div>';
+        // render into the temp container
+        renderCartInto(temp);
+        // copy produced HTML into the visible page areas
+        const producedItems = temp.querySelector('#cartItems');
+        const producedTotals = temp.querySelector('#cartTotals');
+        if (producedItems) cartItemsEl.innerHTML = producedItems.innerHTML;
+        if (producedTotals) totalsEl.innerHTML = producedTotals.innerHTML;
+      }
+      // initial render
+      renderCartToPage();
+
+      // populate totals in the right column
+      function refreshTotals(){
+        const t = Cart.getTotals();
+        totalsEl.innerHTML = `Subtotal: $${t.subtotal.toFixed(2)}<br>Tax: $${t.tax.toFixed(2)}<br><strong>Total: $${t.total.toFixed(2)}</strong>`;
+      }
+      refreshTotals();
+
+      // Redo order: go back to menu page without clearing the cart
+      document.getElementById('redoOrderBtn').addEventListener('click', ()=>{
+        window.location.href = 'menu.html';
+      });
+
+      // Final payment simulation
+      document.getElementById('payNowBtn').addEventListener('click', async ()=>{
+        const name = document.getElementById('custName').value.trim();
+        const email = document.getElementById('custEmail').value.trim();
+        const phone = document.getElementById('custPhone').value.trim();
+        if (!name || !email || !phone){
+          resultEl.style.display = 'block'; resultEl.style.background = '#ffe6e6'; resultEl.textContent = 'Please provide name, email, and phone for the receipt.'; return;
+        }
+
+        const payBtn = document.getElementById('payNowBtn');
+        payBtn.disabled = true; payBtn.textContent = 'Processing…';
+
+        // Create a simple receipt object and persist it to localStorage for demo.
+        const cart = Cart.getCart();
+        const totals = Cart.getTotals();
+        const receipt = { id: 'tcr-' + Date.now(), name, email, phone, cart, totals, createdAt: new Date().toISOString() };
+        try{
+          localStorage.setItem('tcr_last_order', JSON.stringify(receipt));
+        }catch(e){}
+
+        // Simulate payment delay
+        setTimeout(()=>{
+          // Clear cart after successful "payment"
+          Cart.clear();
+          refreshTotals();
+          renderCartToPage();
+          resultEl.style.display = 'block'; resultEl.style.background = '#e6ffef'; resultEl.textContent = 'Payment successful. Receipt has been saved for demo purposes.';
+          payBtn.textContent = 'Paid ✓';
+
+          // Show the View Receipt button and wire it to the receipt page.
+          // IMPORTANT: do NOT auto-redirect — wait for the user to click the
+          // button. This makes the receipt view explicit and prevents
+          // unexpected navigation.
+          const viewBtn = document.getElementById('viewReceiptBtn');
+          if (viewBtn){
+            viewBtn.style.display = 'inline-block';
+            // remove previous listeners (defensive) then attach navigation
+            viewBtn.replaceWith(viewBtn.cloneNode(true));
+            const newViewBtn = document.getElementById('viewReceiptBtn');
+            if (newViewBtn) newViewBtn.addEventListener('click', ()=>{ window.location.href = 'receipt.html'; });
+          }
+        }, 900);
+      });
+
+    })();
+  </script>
+</body>
+</html>

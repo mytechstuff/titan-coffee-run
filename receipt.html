@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Receipt — Titan Coffee Run (Demo)</title>
+  <link rel="stylesheet" href="./src/styles/main.css">
+  <style>
+    .receipt-wrap{ max-width:900px; margin:28px auto; padding:18px }
+    .receipt-header{ display:flex; justify-content:space-between; align-items:center }
+    .receipt-table{ width:100%; border-collapse:collapse; margin-top:12px }
+    .receipt-table th, .receipt-table td{ padding:8px; border-bottom:1px solid #eee }
+    .muted{ color:#666 }
+    .actions{ margin-top:14px }
+    .btn{ padding:8px 12px; border-radius:6px; border:0; cursor:pointer }
+  </style>
+</head>
+<body>
+  <main class="receipt-wrap">
+    <div class="receipt-header">
+      <div>
+        <h1>Order Receipt</h1>
+        <div class="muted">Demo receipt saved in browser localStorage</div>
+      </div>
+      <div>
+        <a href="menu.html">← Back to Menu</a>
+      </div>
+    </div>
+
+    <div id="receiptArea">
+      <p class="muted">Loading last receipt…</p>
+    </div>
+
+    <div class="actions">
+      <a href="menu.html" class="btn">Back to Menu</a>
+    </div>
+  </main>
+
+  <script type="module">
+    import { Cart } from './src/js/cart.js';
+
+    (function(){
+      const area = document.getElementById('receiptArea');
+      const raw = localStorage.getItem('tcr_last_order');
+      if (!raw){
+        area.innerHTML = '<p>No receipt found. Place an order first from the <a href="menu.html">menu</a>.</p>';
+        return;
+      }
+
+      let r = null;
+      try{ r = JSON.parse(raw); }catch(e){ area.innerHTML = '<p>Unable to read stored receipt.</p>'; return; }
+
+      // Basic header info
+      const header = document.createElement('div');
+      header.innerHTML = `
+        <p><strong>Receipt ID:</strong> ${r.id}</p>
+        <p><strong>Placed:</strong> ${new Date(r.createdAt).toLocaleString()}</p>
+        <p><strong>Name:</strong> ${r.name} — <span class="muted">${r.email} • ${r.phone}</span></p>
+      `;
+
+      // Items table
+      const table = document.createElement('table');
+      table.className = 'receipt-table';
+      table.innerHTML = '<thead><tr><th style="width:72px">Qty</th><th>Item</th><th style="width:72px">Size</th><th style="width:110px;text-align:right">Price</th></tr></thead>';
+      const tbody = document.createElement('tbody');
+      (r.cart && r.cart.items || []).forEach(it=>{
+        const tr = document.createElement('tr');
+        const qty = document.createElement('td'); qty.textContent = String(it.qty);
+        const name = document.createElement('td'); name.textContent = (it.product && it.product.name) || 'Item';
+        const size = document.createElement('td'); size.textContent = it.size || 'M';
+        const base = (it.product && Number(it.product.basePrice)) || 0;
+        const linePrice = (Cart.priceForSize ? Cart.priceForSize(base, it.size) : base) * (it.qty || 0);
+        const price = document.createElement('td'); price.style.textAlign = 'right'; price.textContent = '$' + linePrice.toFixed(2);
+        tr.appendChild(qty); tr.appendChild(name); tr.appendChild(size); tr.appendChild(price);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+
+      // Totals (use stored totals if available)
+      const totalsBox = document.createElement('div');
+      const totals = r.totals || { subtotal:0, tax:0, total:0 };
+      totalsBox.innerHTML = `<p>Subtotal: $${(totals.subtotal||0).toFixed(2)}</p><p>Tax: $${(totals.tax||0).toFixed(2)}</p><p><strong>Total: $${(totals.total||0).toFixed(2)}</strong></p>`;
+
+      area.innerHTML = '';
+      area.appendChild(header);
+      area.appendChild(table);
+      area.appendChild(totalsBox);
+
+    })();
+  </script>
+</body>
+</html>

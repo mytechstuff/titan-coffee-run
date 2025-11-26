@@ -24,6 +24,7 @@
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
   <header role="banner">
+    <!-- Header: Site branding and primary navigation. Contains quick links to pages and sign-in. -->
     <a href="/" class="brand" aria-label="Titan Coffee Run home">
       <div class="logo">T</div>
       <div>
@@ -45,8 +46,9 @@
       <h1>Our Menu Order Page</h1>
       <p class="note">This demo page requires signing in. If you are redirected to login, sign in with the demo account and you'll return here.</p>
 
+      <!-- Main: wrapper for the product grid and the cart box injected below. -->
       <div id="menuArea">
-        <!-- menu content will be injected if authenticated -->
+        <!-- Menu content (product cards + cart box) will be injected here by the module script. -->
       </div>
     </div>
   </main>
@@ -60,6 +62,8 @@
       const t = sm.getToken();
       const loggedIn = !!t && sm.validateToken(t).valid;
 
+      // Products: demo product catalog used to render product cards below.
+      // Each product is a small object with `id`, `name`, `desc`, `basePrice`, and an `img` path.
       const products = [
         { id: 'latte', name: 'Titan Latte', desc: 'Our signature latte — rich and smooth.', basePrice: 4.25, img: 'public/assets/img/carousel-1.jpg' },
         { id: 'nitro', name: 'Nitro Cold Brew', desc: 'Bold, cold, and nitrogen-infused.', basePrice: 4.75, img: 'public/assets/img/carousel-2.jpg' },
@@ -70,6 +74,8 @@
       ];
 
       const menuArea = document.getElementById('menuArea');
+
+      // Build product grid: create cards and, when signed in, attach order controls.
 
       function el(tag, cls, inner){ const e = document.createElement(tag); if (cls) e.className = cls; if (inner !== undefined) e.innerHTML = inner; return e; }
 
@@ -114,7 +120,9 @@
           card.appendChild(controls);
         }
 
-        // Hook controls when logged in
+        // Hook controls when logged in: attach incremental updates, merging to the
+        // persisted cart when an item already exists. This wiring updates the
+        // UI immediately and persists changes via the Cart API (sessionStorage).
         if (loggedIn){
           let curQty = 0;
             // increment: if item exists in cart, increase it there; otherwise increase local curQty
@@ -163,6 +171,7 @@
       menuArea.appendChild(grid);
 
       // Cart summary area: use a distinct background so it stands out from product cards
+      // This aside contains two logical sections: left = item list, right = totals/actions.
       const cartBox = document.createElement('aside'); cartBox.className = 'cart-box'; cartBox.style.marginTop='16px';
       // Use a two-column layout: left = items, right = totals and actions
       cartBox.innerHTML = `
@@ -174,8 +183,10 @@
           <div style="width:220px">
             <h3>Checkout</h3>
             <div id="cartTotals"></div>
-            <div style="margin-top:8px">
+            <div style="margin-top:8px;display:flex;gap:8px">
               <button id="clearCartBtn" type="button">Clear Cart</button>
+              <!-- Place Order navigates to the checkout page which will read the cart from sessionStorage -->
+              <button id="placeOrderBtn" type="button">Place Order</button>
             </div>
           </div>
         </div>
@@ -184,7 +195,12 @@
       // render saved cart
       renderCartInto(cartBox);
       const clearBtn = document.getElementById('clearCartBtn');
-      if (clearBtn) clearBtn.addEventListener('click', ()=>{ Cart.clear(); renderCartInto(cartBox); });
+      if (clearBtn) clearBtn.addEventListener('click', ()=>{ /* Clear Cart button: removes stored cart and refreshes UI */ Cart.clear(); renderCartInto(cartBox); });
+      const placeBtn = document.getElementById('placeOrderBtn');
+      if (placeBtn) placeBtn.addEventListener('click', ()=>{
+        // Navigate to checkout page; cart is persisted in sessionStorage by Cart API.
+        window.location.href = 'checkout.html';
+      });
 
     })();
   </script>

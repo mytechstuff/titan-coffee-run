@@ -8,14 +8,21 @@ Follow this lightweight template when adding detailed notes:
 
 ### Title (short, searchable)
 
-- **File(s)**: list the file paths this note concerns
-- **Why**: short rationale for the design choice
-- **What it does**: brief technical summary
-- **Tricky parts / gotchas**: bullet list
-- **Suggested improvements**: optional next steps
 
 Place new notes under a new heading in this `devnotes.md` file, or add files under a `docs/` folder for longer guides. Use markdown links to cross-reference topics.
-## Project description
+
+---
+
+## Cart & Receipt (Demo)
+
+- **Cart implementation:** The demo cart is implemented in `src/js/cart.js`. It persists the cart to `sessionStorage` under the key `tcr_demo_cart_v1` and exposes a small API: `Cart.addItem`, `Cart.updateQty`, `Cart.removeItem`, `Cart.clear`, `Cart.getCart`, and `Cart.getTotals`. The cart renderer `renderCartInto(container)` produces a table view (Qty | Item | Size | Price).
+- **Checkout flow:** The `checkout.html` page reads the cart via the Cart API and presents a contact form (Name, Email, Phone). Clicking `Final Pay Now` runs a simulated payment flow (client-side only): it creates a receipt object, saves it to `localStorage` under `tcr_last_order`, clears the session cart, and reveals a `View Receipt` button for the user to inspect the saved receipt.
+- **Receipt page:** `receipt.html` displays the last receipt saved in `localStorage` (`tcr_last_order`) showing header info, items (with price computed via `Cart.priceForSize` when available), and totals. It includes a link back to `menu.html`.
+
+Notes:
+- These behaviors are intentionally client-side and suitable for demos; they are NOT secure for production. Move cart persistence and order processing server-side for any real deployment.
+- The receipt is only shown when the user clicks `View Receipt` — the checkout flow does not auto-redirect to the receipt page to avoid unexpected navigation.
+
 
 Titan Coffee Run is a small, static front-end scaffold for a coffee shop promo site. It includes a lightweight hero area, a small informational grid, and a simple, dependency-free image carousel/banner rotator that auto-rotates every 3 seconds. The project is intentionally minimal so it can be used as a starting point for a simple marketing site or as a template for a slightly larger front-end app.
 
