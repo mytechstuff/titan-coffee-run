@@ -245,3 +245,14 @@ Notes & examples:
 - UX: for fast lookups of small bits of state (theme, locale, small feature flags), `localStorage` is convenient. For offline-first caching and structured records, use `IndexedDB`.
 
 If you'd like, I can add a short code snippet showing safe patterns for each API (e.g., small `localStorage` helper, a `sessionStorage` use-case, and an `idb` example).
+
+---
+
+## Exporting & Printing Receipts
+
+- `receipt.html` supports three export/print options for the last saved receipt (`localStorage` key `tcr_last_order`):
+  - **Download JSON** — raw JSON copy of the stored receipt for debugging or re-import.
+  - **Download Text** — a human-readable `.txt` file listing header info, items and totals suitable for printing or sharing.
+  - **Print Receipt** — triggers the browser print dialog; users can select "Save as PDF" to export a PDF. The page includes a print stylesheet that hides UI controls during printing.
+
+These are demo conveniences to help testing and to provide a printable receipt without a server-side PDF generator. For production, generate receipts server-side and provide secure downloadable receipts.

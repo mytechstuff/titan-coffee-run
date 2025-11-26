@@ -13,6 +13,12 @@
     .muted{ color:#666 }
     .actions{ margin-top:14px }
     .btn{ padding:8px 12px; border-radius:6px; border:0; cursor:pointer }
+    /* Print helpers: hide controls when printing and ensure a clean layout */
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #fff; color: #000; }
+      .receipt-wrap { box-shadow: none; }
+    }
   </style>
 </head>
 <body>
@@ -31,10 +37,14 @@
       <p class="muted">Loading last receipt…</p>
     </div>
 
-    <div class="actions">
+    <div class="actions no-print">
       <a href="menu.html" class="btn">Back to Menu</a>
       <!-- Download JSON of last saved receipt for demo/debugging -->
       <button id="downloadJsonBtn" class="btn" type="button">Download JSON</button>
+      <!-- Download human-readable text of the receipt -->
+      <button id="downloadTxtBtn" class="btn" type="button">Download Text</button>
+      <!-- Trigger the browser print dialog (user can choose Save as PDF) -->
+      <button id="printBtn" class="btn" type="button">Print Receipt</button>
     </div>
   </main>
 
@@ -108,6 +118,50 @@
           }catch(e){ console.error(e); alert('Failed to create download.'); }
         });
       }
+
+      // Download human-readable text version
+      const dlTxt = document.getElementById('downloadTxtBtn');
+      if (dlTxt){
+        dlTxt.addEventListener('click', ()=>{
+          try{
+            const data = localStorage.getItem('tcr_last_order');
+            if (!data) { alert('No receipt found to download.'); return; }
+            const parsed = JSON.parse(data);
+            // Build a simple human-readable text receipt
+            const lines = [];
+            lines.push('Titan Coffee Run - Receipt');
+            lines.push('Receipt ID: ' + (parsed.id || '')); 
+            lines.push('Placed: ' + (new Date(parsed.createdAt || Date.now()).toLocaleString()));
+            lines.push('Name: ' + (parsed.name || '')); 
+            lines.push('Email: ' + (parsed.email || '') + '  Phone: ' + (parsed.phone || ''));
+            lines.push('');
+            lines.push('Items:');
+            (parsed.cart && parsed.cart.items || []).forEach(it=>{
+              const name = (it.product && it.product.name) || 'Item';
+              const qty = it.qty || 0;
+              const size = it.size || 'M';
+              const base = (it.product && Number(it.product.basePrice)) || 0;
+              const linePrice = (Cart.priceForSize ? Cart.priceForSize(base, it.size) : base) * (it.qty || 0);
+              lines.push(`${qty} x ${name} (${size}) — $${linePrice.toFixed(2)}`);
+            });
+            lines.push('');
+            const totals = parsed.totals || { subtotal:0, tax:0, total:0 };
+            lines.push('Subtotal: $' + (totals.subtotal||0).toFixed(2));
+            lines.push('Tax: $' + (totals.tax||0).toFixed(2));
+            lines.push('Total: $' + (totals.total||0).toFixed(2));
+
+            const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url;
+            const filename = 'tcr_receipt_' + (parsed.id || Date.now()) + '.txt';
+            a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+          }catch(e){ console.error(e); alert('Failed to create download.'); }
+        });
+      }
+
+      // Print button: show print dialog; .no-print class hides controls when printing
+      const printBtn = document.getElementById('printBtn');
+      if (printBtn){ printBtn.addEventListener('click', ()=>{ window.print(); }); }
 
     })();
   </script>

@@ -112,3 +112,12 @@ Note: these behaviors are for demonstration only. Client-side storage and client
 ## Small inline styles
 
 - The `checkout.html` page includes a very small inline CSS block used only by that page to keep the demo focused and self-contained. The inline rules are intentionally minimal (layout tweaks for the checkout column) and are documented in the page header explaining that they may be moved to `src/styles/main.css` later. Keeping a few page-specific styles inline speeds teaching/debugging and avoids large refactors in class exercises.
+
+## Exporting & Printing Receipts
+
+- `receipt.html` provides three options to export or print the last saved receipt (`localStorage` key `tcr_last_order`):
+  - **Download JSON** — saves the raw JSON for debugging or archival use.
+  - **Download Text** — produces a simple human-readable `.txt` receipt (items, quantities, sizes, prices, totals) suitable for quick printing or sharing.
+  - **Print Receipt** — opens the browser print dialog; choose "Save as PDF" in the dialog to export a PDF copy. The page hides UI controls when printing so the printed output is clean.
+
+These are convenience features for the demo. For production-grade receipts, generate and sign receipts on the server and deliver them over HTTPS.
