@@ -169,20 +169,25 @@ export function renderCartInto(container){
   itemsEl.innerHTML = '';
   if (!cart.items.length){ itemsEl.textContent = 'Cart is empty.'; totalsEl.innerHTML = ''; return; }
 
-  const ul = document.createElement('ul'); ul.className = 'cart-items-list';
+  // Render a table for clearer alignment: Quantity | Item | Size | Price
+  const table = document.createElement('table'); table.className = 'cart-items-table';
+  const thead = document.createElement('thead');
+  thead.innerHTML = '<tr><th style="width:72px">Qty</th><th>Item</th><th style="width:72px">Size</th><th style="width:110px;text-align:right">Price</th></tr>';
+  table.appendChild(thead);
+  const tbody = document.createElement('tbody');
   cart.items.forEach(it=>{
-    const li = document.createElement('li'); li.className = 'cart-item-row';
+    const tr = document.createElement('tr'); tr.className = 'cart-item-row';
     const name = (it.product && it.product.name) || 'Item';
     const linePrice = ((priceForSize((it.product && it.product.basePrice)||0, it.size) * it.qty) || 0);
-    // structure: [qty] [name] [size] [linePrice]
-    const qtySpan = document.createElement('span'); qtySpan.className = 'ci-qty'; qtySpan.textContent = String(it.qty);
-    const nameSpan = document.createElement('span'); nameSpan.className = 'ci-name'; nameSpan.textContent = name;
-    const sizeSpan = document.createElement('span'); sizeSpan.className = 'ci-size'; sizeSpan.textContent = it.size;
-    const priceSpan = document.createElement('span'); priceSpan.className = 'ci-price'; priceSpan.textContent = '$' + linePrice.toFixed(2);
-    li.appendChild(qtySpan); li.appendChild(nameSpan); li.appendChild(sizeSpan); li.appendChild(priceSpan);
-    ul.appendChild(li);
+    const tdQty = document.createElement('td'); tdQty.textContent = String(it.qty); tdQty.className = 'ci-qty';
+    const tdName = document.createElement('td'); tdName.textContent = name; tdName.className = 'ci-name';
+    const tdSize = document.createElement('td'); tdSize.textContent = it.size; tdSize.className = 'ci-size';
+    const tdPrice = document.createElement('td'); tdPrice.textContent = '$' + linePrice.toFixed(2); tdPrice.className = 'ci-price'; tdPrice.style.textAlign = 'right';
+    tr.appendChild(tdQty); tr.appendChild(tdName); tr.appendChild(tdSize); tr.appendChild(tdPrice);
+    tbody.appendChild(tr);
   });
-  itemsEl.appendChild(ul);
+  table.appendChild(tbody);
+  itemsEl.appendChild(table);
 
   // totals
   const totals = Cart.getTotals();
