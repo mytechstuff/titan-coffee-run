@@ -1,0 +1,18 @@
+{
+  "name": "titan-run-backend",
+  "version": "1.0.0",
+  "description": "Backend for Titan Coffee Run demo",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "serve-json": "json-server --watch db.json --port 3001",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "json-server": "^1.0.0-beta.3"
+  }
+}

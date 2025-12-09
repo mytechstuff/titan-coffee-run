@@ -1,0 +1,47 @@
+{
+  "products": [
+    {
+      "id": "latte",
+      "name": "Titan Latte",
+      "desc": "Our signature latte — rich and smooth.",
+      "basePrice": 4.25,
+      "img": "public/assets/img/carousel-1.jpg"
+    },
+    {
+      "id": "nitro",
+      "name": "Nitro Cold Brew",
+      "desc": "Bold, cold, and nitrogen-infused.",
+      "basePrice": 4.75,
+      "img": "public/assets/img/carousel-2.jpg"
+    },
+    {
+      "id": "americano",
+      "name": "Americano",
+      "desc": "Espresso with hot water — simple and classic.",
+      "basePrice": 3.00,
+      "img": "public/assets/img/carousel-3.jpg"
+    },
+    {
+      "id": "almond",
+      "name": "Almond Milk Capp",
+      "desc": "Foamy and dairy-free option.",
+      "basePrice": 4.50,
+      "img": "public/assets/img/carousel-4.png"
+    },
+    {
+      "id": "mocha",
+      "name": "Chocolate Mocha",
+      "desc": "Velvety mocha with dark chocolate.",
+      "basePrice": 4.95,
+      "img": "public/assets/img/titanquad1.jpg"
+    },
+    {
+      "id": "coldbrew",
+      "name": "House Cold Brew",
+      "desc": "Slow-steeped for smooth flavor.",
+      "basePrice": 3.95,
+      "img": "public/assets/img/banner-hero.jpg"
+    }
+  ],
+  "orders": []
+}
