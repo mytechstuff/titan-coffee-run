@@ -113,36 +113,54 @@
         const payBtn = document.getElementById('payNowBtn');
         payBtn.disabled = true; payBtn.textContent = 'Processing…';
 
-        // Create a simple receipt object and persist it to localStorage for demo.
+        // Create an order object (server-side will assign an id).
         const cart = Cart.getCart();
         const totals = Cart.getTotals();
-        const receipt = { id: 'tcr-' + Date.now(), name, email, phone, cart, totals, createdAt: new Date().toISOString() };
-        try{
-          localStorage.setItem('tcr_last_order', JSON.stringify(receipt));
-        }catch(e){}
+        const orderObj = { name, email, phone, cart, totals, createdAt: new Date().toISOString() };
 
-        // Simulate payment delay
-        setTimeout(()=>{
-          // Clear cart after successful "payment"
+        // Attempt to POST the order to the json-server backend. If the
+        // network call fails, fall back to storing the receipt in
+        // localStorage for offline/demo use.
+        try{
+          const resp = await fetch('http://localhost:3001/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderObj)
+          });
+          if (!resp.ok) throw new Error('Server returned ' + resp.status);
+          const saved = await resp.json();
+          // Persist the server-returned object as the last order for demo
+          try { localStorage.setItem('tcr_last_order', JSON.stringify(saved)); } catch(e){}
+
+          // Update UI to indicate success
           Cart.clear();
           refreshTotals();
           renderCartToPage();
-          resultEl.style.display = 'block'; resultEl.style.background = '#e6ffef'; resultEl.textContent = 'Payment successful. Receipt has been saved for demo purposes.';
+          resultEl.style.display = 'block'; resultEl.style.background = '#e6ffef'; resultEl.textContent = 'Payment successful. Order submitted to backend.';
           payBtn.textContent = 'Paid ✓';
 
-          // Show the View Receipt button and wire it to the receipt page.
-          // IMPORTANT: do NOT auto-redirect — wait for the user to click the
-          // button. This makes the receipt view explicit and prevents
-          // unexpected navigation.
+          // Reveal the View Receipt button (user must click to navigate)
           const viewBtn = document.getElementById('viewReceiptBtn');
           if (viewBtn){
             viewBtn.style.display = 'inline-block';
-            // remove previous listeners (defensive) then attach navigation
             viewBtn.replaceWith(viewBtn.cloneNode(true));
             const newViewBtn = document.getElementById('viewReceiptBtn');
             if (newViewBtn) newViewBtn.addEventListener('click', ()=>{ window.location.href = 'receipt.html'; });
           }
-        }, 900);
+
+        }catch(err){
+          // Network/server error — fallback to local demo behavior
+          console.warn('Order POST failed:', err);
+          const receipt = { id: 'tcr-' + Date.now(), name, email, phone, cart, totals, createdAt: new Date().toISOString() };
+          try{ localStorage.setItem('tcr_last_order', JSON.stringify(receipt)); }catch(e){}
+          Cart.clear();
+          refreshTotals();
+          renderCartToPage();
+          resultEl.style.display = 'block'; resultEl.style.background = '#fff3cd'; resultEl.textContent = 'Payment completed locally (offline demo). The order was not sent to the backend.';
+          payBtn.textContent = 'Paid ✓';
+          const viewBtn = document.getElementById('viewReceiptBtn');
+          if (viewBtn){ viewBtn.style.display = 'inline-block'; viewBtn.replaceWith(viewBtn.cloneNode(true)); const newViewBtn = document.getElementById('viewReceiptBtn'); if (newViewBtn) newViewBtn.addEventListener('click', ()=>{ window.location.href = 'receipt.html'; }); }
+        }
       });
 
     })();
