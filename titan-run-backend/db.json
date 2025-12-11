@@ -18,14 +18,14 @@
       "id": "americano",
       "name": "Americano",
       "desc": "Espresso with hot water — simple and classic.",
-      "basePrice": 3.00,
+      "basePrice": 3,
       "img": "public/assets/img/carousel-3.jpg"
     },
     {
       "id": "almond",
       "name": "Almond Milk Capp",
       "desc": "Foamy and dairy-free option.",
-      "basePrice": 4.50,
+      "basePrice": 4.5,
       "img": "public/assets/img/carousel-4.png"
     },
     {
@@ -45,59 +45,226 @@
   ],
   "orders": [
     {
-      "id": 1,
+      "id": "1",
       "name": "Alice Example",
       "email": "alice@example.com",
       "phone": "(555) 111-2222",
-      "cart": { "items": [ { "product": { "id": "latte", "name":"Titan Latte", "basePrice":4.25 }, "size":"M", "qty":2 } ] },
-      "totals": { "subtotal": 10.62, "tax": 0.85, "total": 11.47 },
+      "cart": {
+        "items": [
+          {
+            "product": {
+              "id": "latte",
+              "name": "Titan Latte",
+              "basePrice": 4.25
+            },
+            "size": "M",
+            "qty": 2
+          }
+        ]
+      },
+      "totals": {
+        "subtotal": 10.62,
+        "tax": 0.85,
+        "total": 11.47
+      },
       "createdAt": "2025-11-01T10:15:00.000Z"
     },
     {
-      "id": 2,
+      "id": "2",
       "name": "Bob Sample",
       "email": "bob@example.com",
       "phone": "(555) 333-4444",
-      "cart": { "items": [ { "product": { "id": "nitro", "name":"Nitro Cold Brew", "basePrice":4.75 }, "size":"L", "qty":1 }, { "product": { "id":"mocha","name":"Chocolate Mocha","basePrice":4.95 }, "size":"S", "qty":1 } ] },
-      "totals": { "subtotal": 10.42, "tax": 0.83, "total": 11.25 },
+      "cart": {
+        "items": [
+          {
+            "product": {
+              "id": "nitro",
+              "name": "Nitro Cold Brew",
+              "basePrice": 4.75
+            },
+            "size": "L",
+            "qty": 1
+          },
+          {
+            "product": {
+              "id": "mocha",
+              "name": "Chocolate Mocha",
+              "basePrice": 4.95
+            },
+            "size": "S",
+            "qty": 1
+          }
+        ]
+      },
+      "totals": {
+        "subtotal": 10.42,
+        "tax": 0.83,
+        "total": 11.25
+      },
       "createdAt": "2025-11-02T14:30:00.000Z"
     },
     {
-      "id": 3,
+      "id": "3",
       "name": "Carol Demo",
       "email": "carol@example.com",
       "phone": "(555) 555-6666",
-      "cart": { "items": [ { "product": { "id": "americano", "name":"Americano", "basePrice":3.00 }, "size":"S", "qty":3 } ] },
-      "totals": { "subtotal": 9.00, "tax": 0.72, "total": 9.72 },
+      "cart": {
+        "items": [
+          {
+            "product": {
+              "id": "americano",
+              "name": "Americano",
+              "basePrice": 3
+            },
+            "size": "S",
+            "qty": 3
+          }
+        ]
+      },
+      "totals": {
+        "subtotal": 9,
+        "tax": 0.72,
+        "total": 9.72
+      },
       "createdAt": "2025-11-03T08:45:00.000Z"
-    }
-    ,
+    },
     {
-      "id": 4,
+      "id": "4",
       "name": "David Random",
       "email": "david.random@example.com",
       "phone": "(555) 777-8888",
-      "cart": { "items": [ { "product": { "id": "almond", "name":"Almond Milk Capp", "basePrice":4.50 }, "size":"L", "qty":2 }, { "product": { "id":"coldbrew","name":"House Cold Brew","basePrice":3.95 }, "size":"M", "qty":1 } ] },
-      "totals": { "subtotal": 12.95, "tax": 1.04, "total": 13.99 },
+      "cart": {
+        "items": [
+          {
+            "product": {
+              "id": "almond",
+              "name": "Almond Milk Capp",
+              "basePrice": 4.5
+            },
+            "size": "L",
+            "qty": 2
+          },
+          {
+            "product": {
+              "id": "coldbrew",
+              "name": "House Cold Brew",
+              "basePrice": 3.95
+            },
+            "size": "M",
+            "qty": 1
+          }
+        ]
+      },
+      "totals": {
+        "subtotal": 12.95,
+        "tax": 1.04,
+        "total": 13.99
+      },
       "createdAt": "2025-11-10T09:20:00.000Z"
     },
     {
-      "id": 5,
+      "id": "5",
       "name": "Eve Tester",
       "email": "eve.tester@example.com",
       "phone": "(555) 999-0000",
-      "cart": { "items": [ { "product": { "id": "mocha", "name":"Chocolate Mocha", "basePrice":4.95 }, "size":"M", "qty":1 }, { "product": { "id":"latte","name":"Titan Latte","basePrice":4.25 }, "size":"S", "qty":1 }, { "product": { "id":"nitro","name":"Nitro Cold Brew","basePrice":4.75 }, "size":"S", "qty":1 } ] },
-      "totals": { "subtotal": 13.95, "tax": 1.12, "total": 15.07 },
+      "cart": {
+        "items": [
+          {
+            "product": {
+              "id": "mocha",
+              "name": "Chocolate Mocha",
+              "basePrice": 4.95
+            },
+            "size": "M",
+            "qty": 1
+          },
+          {
+            "product": {
+              "id": "latte",
+              "name": "Titan Latte",
+              "basePrice": 4.25
+            },
+            "size": "S",
+            "qty": 1
+          },
+          {
+            "product": {
+              "id": "nitro",
+              "name": "Nitro Cold Brew",
+              "basePrice": 4.75
+            },
+            "size": "S",
+            "qty": 1
+          }
+        ]
+      },
+      "totals": {
+        "subtotal": 13.95,
+        "tax": 1.12,
+        "total": 15.07
+      },
       "createdAt": "2025-11-11T16:05:00.000Z"
     },
     {
-      "id": 6,
+      "id": "6",
       "name": "Frank Buyer",
       "email": "frank.buyer@example.com",
       "phone": "(555) 222-1212",
-      "cart": { "items": [ { "product": { "id": "americano", "name":"Americano", "basePrice":3.00 }, "size":"L", "qty":2 }, { "product": { "id":"mocha","name":"Chocolate Mocha","basePrice":4.95 }, "size":"L", "qty":3 } ] },
-      "totals": { "subtotal": 20.85, "tax": 1.67, "total": 22.52 },
+      "cart": {
+        "items": [
+          {
+            "product": {
+              "id": "americano",
+              "name": "Americano",
+              "basePrice": 3
+            },
+            "size": "L",
+            "qty": 2
+          },
+          {
+            "product": {
+              "id": "mocha",
+              "name": "Chocolate Mocha",
+              "basePrice": 4.95
+            },
+            "size": "L",
+            "qty": 3
+          }
+        ]
+      },
+      "totals": {
+        "subtotal": 20.85,
+        "tax": 1.67,
+        "total": 22.52
+      },
       "createdAt": "2025-11-12T12:00:00.000Z"
+    },
+    {
+      "id": "0c4f",
+      "name": "David Chretien",
+      "email": "dave@aol.com",
+      "phone": "727-0699-9582",
+      "cart": {
+        "items": [
+          {
+            "product": {
+              "id": "coldbrew",
+              "name": "House Cold Brew",
+              "basePrice": 3.95,
+              "img": ""
+            },
+            "size": "L",
+            "qty": 1,
+            "date": "2025-12-11T02:09:19.095Z"
+          }
+        ]
+      },
+      "totals": {
+        "subtotal": 5.93,
+        "tax": 0.47,
+        "total": 6.4
+      },
+      "createdAt": "2025-12-11T02:09:47.693Z"
     }
   ]
 }
