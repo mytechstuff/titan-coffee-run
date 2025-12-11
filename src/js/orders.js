@@ -82,24 +82,47 @@ export const Orders = {
    * fetchAll
    * Fetch all orders from the backend API.
    * Returns an array of Order instances.
-   * Includes error handling and fallback to empty array.
+   * 
+   * Error Handling Strategy:
+   * - Network errors (no internet, connection refused, timeout): caught by try/catch,
+   *   logged to console, and returns empty array [] as fallback
+   * - HTTP errors (4xx, 5xx status codes): checked via resp.ok flag, logged as warning,
+   *   returns empty array [] to prevent page crashes
+   * - JSON parsing errors: would be caught by try/catch (rare, but handled)
+   * - Invalid data structure: validated with Array.isArray() check before mapping,
+   *   returns empty array [] if response is not an array
+   * 
+   * UI Impact: When this returns [], the orders.html page displays "No orders found"
+   * message to the user (graceful fallback). The error details are logged to the
+   * browser console for debugging.
    */
   async fetchAll() {
     try {
+      // Attempt network request to backend
       const resp = await fetch(API_URL);
+      
+      // Check HTTP status code (2xx = success, 4xx/5xx = error)
       if (!resp.ok) {
         console.warn(`Orders.fetchAll failed with status ${resp.status}`);
         return [];
       }
+      
+      // Parse JSON response
       const data = await resp.json();
-      // Parse into Order instances
+      
+      // Validate response is an array before mapping to Order instances
+      // If response is not an array (unexpected format), return empty array
       const orders = Array.isArray(data) ? data.map(o => Order.fromObject(o)) : [];
-      // Update cache
+      
+      // Update cache with new data
       this._cache = orders;
       this._cacheTime = Date.now();
       return orders;
+      
     } catch (err) {
+      // Catches: network errors, timeout, parsing errors, and any other exceptions
       console.error('Error fetching orders:', err);
+      // Return empty array as fallback — prevents UI from breaking
       return [];
     }
   },
@@ -132,16 +155,30 @@ export const Orders = {
   /**
    * fetchById
    * Fetch a single order by ID from the backend.
+   * 
+   * Error Handling:
+   * - Network errors: caught by try/catch, logged to console, returns null
+   * - 404 Not Found: resp.ok check catches it, logs warning, returns null
+   * - Other HTTP errors (5xx): logged as warning, returns null
+   * - JSON parse errors: caught by try/catch, returns null
+   * 
+   * Returns: Order instance on success, null on any error
+   * 
+   * Usage: UI checks if result is null before rendering to handle missing orders gracefully
    */
   async fetchById(id) {
     try {
       const resp = await fetch(`${API_URL}/${id}`);
+      
+      // If order not found (404) or any other error status, return null
       if (!resp.ok) {
         console.warn(`Order ${id} not found`);
         return null;
       }
+      
       const data = await resp.json();
       return Order.fromObject(data);
+      
     } catch (err) {
       console.error(`Error fetching order ${id}:`, err);
       return null;
@@ -177,24 +214,45 @@ export const Orders = {
 
   /**
    * post
-   * Create a new order on the backend.
-   * Accepts a plain order object and returns the server-assigned Order instance.
+   * Create a new order on the backend via HTTP POST.
+   * 
+   * Error Handling:
+   * - Network errors (connection refused, timeout): caught by try/catch,
+   *   logged to console, returns null
+   * - HTTP errors (4xx validation error, 5xx server error): resp.ok check
+   *   catches it, logs warning, returns null (prevents order loss data being silently ignored)
+   * - JSON parse errors: caught by try/catch, returns null
+   * - Cache invalidation: if POST succeeds, clears cache so next fetchAll() hits server
+   * 
+   * Returns: Order instance (with server-assigned id) on success, null on any error
+   * 
+   * Usage: Caller should check if result is null before confirming order to user.
+   * This pattern ensures user always knows if order was saved to backend or not.
    */
   async post(orderObj) {
     try {
+      // Send order to backend as JSON
       const resp = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderObj)
       });
+      
+      // Check if server accepted the POST
       if (!resp.ok) {
         console.warn(`POST to ${API_URL} failed with status ${resp.status}`);
         return null;
       }
+      
+      // Server returns the saved order with assigned id
       const data = await resp.json();
+      
       // Invalidate cache since we added a new order
+      // This ensures next fetchAll() will retrieve the fresh list including new order
       this.clearCache();
+      
       return Order.fromObject(data);
+      
     } catch (err) {
       console.error('Error posting order:', err);
       return null;
