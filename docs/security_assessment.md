@@ -534,4 +534,788 @@ The Titan Coffee Run application is a **well-documented educational demo** with 
 - [MDN Web Security](https://developer.mozilla.org/en-US/docs/Web/Security)
 - [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework)
 
+---
+
+## User-Defined Vulnerability Checklist
+
+This section addresses specific security concerns through a targeted questionnaire format.
+
+### 1. Does it accept user input without validation or sanitization?
+
+**Answer:** ✅ **YES - CRITICAL ISSUE**
+
+**Details:**
+- **Backend (json-server):** Accepts ALL POST/PUT/PATCH requests to `/orders` and `/products` endpoints without ANY validation
+- **Frontend validation exists** but is client-side only and easily bypassed
+- **No server-side input sanitization** for special characters, SQL injection, or script injection
+
+**Evidence:**
+```javascript
+// checkout.html line 125 - NO validation before POST
+const resp = await fetch('http://localhost:3001/orders', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(orderObj)  // Directly sends user input
+});
+```
+
+**Examples of Unvalidated Input:**
+- Order form fields (name, email, phone) - client-side validation only
+- Product search/filter inputs - no sanitization
+- Cart quantities - type checking on client only
+- Credit application form (`apply.html`) - validates format but not malicious content
+
+**Risk Impact:**
+- Malicious data can be injected into database
+- Price manipulation possible (change cart item prices)
+- Data structure corruption (send unexpected fields)
+- Potential for stored XSS attacks
+
+**Specific Vulnerabilities:**
+- `src/js/orders.js` - `post()` method sends data without sanitization
+- `checkout.html` - contact form data sent directly to backend
+- `src/qualify.js` - validates format but not malicious patterns
+
+---
+
+### 2. Is user-provided data inserted directly into HTML without escaping?
+
+**Answer:** ⚠️ **YES - MEDIUM TO HIGH RISK**
+
+**Details:**
+- Multiple locations use `innerHTML` to render user-controlled data
+- Some instances have security warnings in comments (indicating awareness)
+- No HTML escaping or sanitization library (e.g., DOMPurify) implemented
+
+**Evidence:**
+
+**Location 1: `src/qualify.js` (line 255)**
+```javascript
+// DOCUMENTED XSS RISK - includes security warning comment
+s.innerHTML = msgs.length ? '<ul>'+msgs.map(m=>'<li>'+m+'</li>').join('')+'</ul>' : '';
+```
+- Renders validation messages directly into HTML
+- If validation error messages contain user input, XSS is possible
+
+**Location 2: `src/js/cart.js` (lines 181-187)**
+```javascript
+itemsEl.innerHTML = '';
+// ...
+thead.innerHTML = '<tr><th style="width:72px">Qty</th><th>Item</th>...</tr>';
+```
+- Renders cart items which include product names from database
+- If product names are compromised (injected via unvalidated POST), XSS occurs
+
+**Location 3: `src/js/orders.js` (lines 272-286)**
+```javascript
+container.innerHTML = '';
+// ...
+thead.innerHTML = `<tr>...</tr>`;
+```
+- Renders order data including customer names, emails
+- If malicious order data is POSTed, it will execute when rendered
+
+**Safe Usage (for comparison):**
+```javascript
+// Some code DOES use textContent safely:
+itemsEl.textContent = 'Cart is empty.';  // Safe - no XSS risk
+```
+
+**Risk Scenarios:**
+1. **Stored XSS via Orders:** Attacker POSTs order with name: `<script>alert(document.cookie)</script>` → executes when admin views orders
+2. **Reflected XSS via Validation:** Error messages might echo unsanitized user input
+3. **DOM-based XSS:** URL parameters rendered without encoding
+
+**Mitigation Status:**
+- ❌ No DOMPurify or similar sanitization library installed
+- ❌ No Content Security Policy to block inline scripts
+- ✅ Code comments show security awareness (partial credit)
+
+---
+
+### 3. Are passwords stored in plain text?
+
+**Answer:** ✅ **YES - CRITICAL ISSUE**
+
+**Details:**
+- **Demo user passwords hardcoded in plaintext** in client-side JavaScript
+- **Admin password hardcoded in plaintext** in authentication logic
+- **Base64-encoded passwords** in optional user storage (Base64 is NOT encryption)
+
+**Evidence:**
+
+**Location 1: `src/js/login.js` (lines 39-42)**
+```javascript
+// PLAINTEXT PASSWORDS IN SOURCE CODE
+const DEMO_USERS = {
+  'demo@example.com': { password: 'DemoPass123', id: 'user-demo' }
+};
+```
+- Password visible to anyone viewing page source
+- Impossible to change without code deployment
+
+**Location 2: `src/js/login.js` (line 105)**
+```javascript
+// HARDCODED ADMIN PASSWORD
+if (password === 'test123') {
+  // Admin authentication logic
+}
+```
+- Admin password `test123` is weak and hardcoded
+- No password hashing or secure comparison
+
+**Location 3: `src/js/userStorage.js` (lines 146-157)**
+```javascript
+// OPTIONAL BASE64 PASSWORD STORAGE (with security warning)
+constructor({ firstName = '', lastName = '', email = '', 
+              passwordBase64 = undefined, passwordSet = false, ...
+  this.passwordBase64 = passwordBase64; // Base64 is NOT encryption
+  // SECURITY NOTE: Base64 is NOT encryption. Storing passwords (even encoded)
+  // in localStorage is insecure and for demo/education only.
+```
+- `passwordBase64` field allows storing Base64-encoded passwords in localStorage
+- Code includes warnings but functionality exists
+
+**Storage Locations:**
+- **Client-side source code:** Demo passwords in `login.js`
+- **localStorage:** Optional Base64 passwords in `tcr_user_v1` key
+- **No backend storage:** json-server doesn't authenticate, stores no passwords
+
+**Why This Is Critical:**
+- Anyone can view passwords in browser DevTools or page source
+- localStorage accessible to any JavaScript (XSS can steal)
+- Base64 decoding is trivial: `atob('RGVtb1Bhc3MxMjM=')` → `DemoPass123`
+- No salting, hashing, or key derivation functions used
+
+**Demo Credentials Exposed:**
+- Demo user: `demo@example.com` / `DemoPass123`
+- Admin: `admin` / `test123`
+
+---
+
+### 4. Are API keys or credentials visible in the client-side code?
+
+**Answer:** ⚠️ **PARTIAL - MODERATE RISK**
+
+**Details:**
+- **No third-party API keys found** (e.g., Stripe, AWS, Google APIs)
+- **Demo credentials are hardcoded** (covered in Question 3)
+- **Backend URL hardcoded** but is localhost (low risk for production if changed)
+- **No secrets management** implemented
+
+**Evidence:**
+
+**Hardcoded Backend URLs:**
+```javascript
+// menu.html line 68
+const resp = await fetch('http://localhost:3001/products');
+
+// src/js/orders.js line 17
+const API_URL = 'http://localhost:3001/orders';
+
+// checkout.html line 125
+const resp = await fetch('http://localhost:3001/orders', {...});
+```
+- Backend URL hardcoded in multiple locations
+- Not an immediate risk (localhost only) but problematic for production
+- Should use environment variables: `process.env.API_URL`
+
+**What's NOT Found (Good):**
+- ✅ No AWS access keys
+- ✅ No Stripe publishable/secret keys
+- ✅ No Firebase config objects
+- ✅ No database connection strings
+- ✅ No OAuth client secrets
+
+**What IS Exposed:**
+- ❌ Demo user credentials (see Question 3)
+- ❌ Admin credentials (see Question 3)
+- ❌ Backend endpoint structure visible
+
+**Risk Assessment:**
+- **Current State:** Low risk for third-party services (none used)
+- **Production Risk:** HIGH if deployed without environment variables
+- **Credential Exposure:** CRITICAL (hardcoded passwords)
+
+**Recommendation:**
+- Use `.env` files with `dotenv` package for configuration
+- Never commit API keys to version control
+- Use environment-specific builds (dev/staging/prod)
+- Implement secrets management (AWS Secrets Manager, Azure Key Vault)
+
+---
+
+### 5. Does the app display detailed error messages to users? To developers?
+
+**Answer:** ⚠️ **YES - MIXED BEHAVIOR**
+
+**Details:**
+- **Users:** Receive some generic error messages (good) but also see console errors (bad)
+- **Developers:** Extensive console.log debugging in production code (high risk)
+- **Error handling:** Try/catch blocks present but leak implementation details
+
+**Evidence:**
+
+### **A. User-Facing Error Messages (Mostly Generic - Good)**
+
+```javascript
+// orders.js line 110 - Generic error message
+console.error('Orders.fetchAll error:', err);
+return [];  // Silent failure with empty array
+```
+
+```javascript
+// login.js lines 153-154 - Generic message
+if (msg) { 
+  msg.textContent = 'An unexpected error occurred. Check console.'; 
+  msg.className = 'error'; 
+}
+```
+- User sees "An unexpected error occurred" (generic)
+- BUT directed to "Check console" (exposes debugging info)
+
+### **B. Developer/Console Logging (Excessive - Bad)**
+
+**Authentication Debugging:**
+```javascript
+// login.js line 85
+console.log('[login.js] credentials', { email, passwordPresent: !!password });
+
+// login.js line 129
+console.log('[login.js] auth result', res);
+```
+- Logs authentication attempts and results
+- Visible in production browser console
+
+**Admin Authorization Debugging:**
+```javascript
+// sales.html line 68
+console.log('[sales.html] adminLoggedIn value:', localStorage.getItem('adminLoggedIn'));
+
+// sales.html line 72
+console.log('[sales.html] admin verified — showing page');
+```
+- Reveals authorization logic and state
+- Helps attackers understand security model
+
+**API Error Details:**
+```javascript
+// orders.js line 110
+console.error('Orders.fetchAll error:', err);
+// Logs full error object including stack traces
+```
+
+### **C. Alert Dialogs (Mixed Security)**
+
+```javascript
+// login.js line 142
+window.alert('Sign in failed — check your email/password and try again.');
+```
+- Generic message (good)
+
+```javascript
+// login.js line 153
+window.alert('An error occurred while signing in — see console.');
+```
+- Directs user to console (bad - leaks debug info)
+
+**What Gets Exposed:**
+- Implementation details (file names, function names in console logs)
+- Authentication flow logic
+- Error stack traces
+- localStorage key names and values
+- API endpoint structure
+- Client-side authorization checks
+
+**Risk Impact:**
+- **Information Disclosure:** Attackers learn system architecture
+- **Attack Surface Mapping:** Console logs reveal security mechanisms
+- **Debugging Aids Exploitation:** Stack traces help craft attacks
+
+**Recommendation:**
+- Remove ALL console.log statements in production builds
+- Use build-time stripping (webpack, terser)
+- Implement proper error logging service (Sentry, LogRocket)
+- Show generic user messages only
+- Log detailed errors server-side only
+
+---
+
+### 6. Are there default or weak passwords in this configuration?
+
+**Answer:** ✅ **YES - CRITICAL ISSUE**
+
+**Details:**
+- **Weak default passwords** present and documented in UI
+- **No password complexity requirements** enforced server-side
+- **Easily guessable credentials** for both demo and admin accounts
+
+**Evidence:**
+
+### **Documented Default Credentials**
+
+**From `login.html` (visible to all users):**
+```html
+<p class="note">Demo accounts:<br>
+<strong>demo@example.com / DemoPass123</strong><br>
+<strong>Admin: admin / test123</strong></p>
+```
+- Credentials displayed directly on login page
+- No requirement to change on first login
+- No password expiration policy
+
+### **Password Strength Analysis**
+
+| Account | Username | Password | Strength | Issues |
+|---------|----------|----------|----------|---------|
+| Demo User | `demo@example.com` | `DemoPass123` | 🟡 WEAK | Dictionary word + predictable numbers |
+| Admin | `admin` | `test123` | 🔴 VERY WEAK | Common default, appears in breach databases |
+
+**Password Weaknesses:**
+1. **`test123` (Admin):**
+   - Extremely common default password
+   - Only 7 characters
+   - No special characters
+   - Dictionary word + sequential numbers
+   - Appears in top 1000 most common passwords
+
+2. **`DemoPass123` (Demo User):**
+   - Predictable pattern (word + numbers)
+   - Contains "Demo" and "Pass" (hint words)
+   - 11 characters but low entropy
+   - No special characters
+
+### **No Password Policies Enforced**
+
+**Registration Form Has Client-Side Strength Meter:**
+```javascript
+// src/js/registration.js line 106
+calculatePasswordScore(value) {
+  // Checks length and character variety
+  // But NO server-side enforcement
+}
+```
+- Password strength calculated but not enforced
+- Client-side only (easily bypassed)
+- No minimum score requirement on backend
+
+**Missing Security Features:**
+- ❌ No password complexity requirements (upper/lower/number/special)
+- ❌ No minimum length enforcement (server-side)
+- ❌ No password expiration/rotation policy
+- ❌ No checking against common password lists
+- ❌ No force password change on first login
+- ❌ No multi-factor authentication (MFA)
+- ❌ No account lockout after repeated failures (backend)
+
+### **Default Credentials Risk**
+
+**Attack Scenarios:**
+1. **Credential Stuffing:** `admin/test123` likely tried first by automated tools
+2. **Brute Force:** Weak passwords crack in seconds
+3. **Social Engineering:** "Demo" credentials obvious to attackers
+4. **Documentation Exposure:** README or login page shows credentials
+
+**Real-World Impact:**
+- If deployed to internet with default passwords → **immediate compromise**
+- Automated scanners try common credentials (`admin/admin`, `admin/test123`, etc.)
+- Default credentials listed in public GitHub repo (searchable)
+
+**Recommendation:**
+- **NEVER use default passwords in any environment**
+- Force password change on first login
+- Implement password complexity policy (NIST SP 800-63B):
+  - Minimum 12-15 characters
+  - Check against breach databases (HaveIBeenPwned API)
+  - Allow passphrases and special characters
+- Use multi-factor authentication (MFA)
+- Implement account lockout (5 failed attempts)
+- Remove credentials from source code and documentation
+
+---
+
+### 7. Is data transmitted without encryption?
+
+**Answer:** ✅ **YES - HIGH RISK**
+
+**Details:**
+- **All API traffic uses HTTP** (not HTTPS)
+- **No TLS/SSL encryption** on localhost development server
+- **Passwords transmitted in plaintext** over the network
+- **PII sent unencrypted** in POST requests
+
+**Evidence:**
+
+### **Unencrypted API Endpoints**
+
+```javascript
+// menu.html line 68
+const resp = await fetch('http://localhost:3001/products');
+
+// orders.js line 17
+const API_URL = 'http://localhost:3001/orders';
+
+// checkout.html line 125
+const resp = await fetch('http://localhost:3001/orders', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(orderObj)  // PII sent over HTTP
+});
+```
+- **Protocol:** `http://` (plaintext)
+- **Port:** 3001 (non-standard, no HTTPS)
+- **Encryption:** NONE
+
+### **Sensitive Data Transmitted Unencrypted**
+
+**1. Authentication Credentials:**
+```javascript
+// login.js - password sent during authentication
+// (currently client-side only, but pattern shows risk)
+const password = pwdEl.value || '';
+// If sent to backend: transmitted in plaintext over HTTP
+```
+
+**2. Personal Identifiable Information (PII):**
+```javascript
+// checkout.html line 125-130
+const orderObj = {
+  name,      // Full name in plaintext
+  email,     // Email in plaintext
+  phone,     // Phone number in plaintext
+  cart,      // Purchase history in plaintext
+  totals
+};
+const resp = await fetch('http://localhost:3001/orders', {
+  method: 'POST',
+  body: JSON.stringify(orderObj)  // ALL PII UNENCRYPTED
+});
+```
+
+**3. Session Tokens:**
+```javascript
+// sessionManager.js - tokens stored in localStorage
+// If sent via Authorization header: transmitted in plaintext
+```
+
+### **Network Traffic Analysis**
+
+**What's Visible on Network (Wireshark/tcpdump):**
+- ✅ Complete HTTP request/response bodies
+- ✅ Customer names, emails, phone numbers
+- ✅ Order details and cart contents
+- ✅ Session tokens (if implemented)
+- ✅ API endpoint structure
+
+**Example HTTP Request (plaintext):**
+```http
+POST /orders HTTP/1.1
+Host: localhost:3001
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "phone": "555-1234",
+  "cart": [...]
+}
+```
+
+### **Attack Vectors**
+
+**1. Man-in-the-Middle (MITM):**
+- Attacker on same WiFi network can intercept traffic
+- HTTP traffic visible to ISP, network admin, proxy servers
+- No integrity protection (traffic can be modified)
+
+**2. Session Hijacking:**
+- Session tokens transmitted without encryption
+- Token stolen → attacker impersonates user
+
+**3. Credential Sniffing:**
+- If passwords sent to backend, visible on network
+- Replay attacks possible
+
+**4. Data Exfiltration:**
+- PII collected by passive network monitoring
+- GDPR/CCPA violations (PII must be encrypted in transit)
+
+### **Current State: Localhost Only**
+
+**Mitigating Factor:**
+- Traffic stays on `localhost` (127.0.0.1) → not exposed to external network
+- Loopback interface not accessible remotely
+
+**Why This Still Matters:**
+1. **Malicious local processes** can sniff loopback traffic
+2. **Pattern established** - developers might deploy with same config
+3. **No HTTPS enforcement** - easy to forget when moving to production
+4. **Code examples** - others might copy HTTP pattern
+
+### **Compliance Impact**
+
+**Regulatory Violations:**
+- ❌ **PCI DSS:** Credit card data must use TLS 1.2+ (N/A here, but pattern is wrong)
+- ❌ **HIPAA:** PHI must be encrypted in transit (if handling health data)
+- ❌ **GDPR Article 32:** "Encryption of personal data" required
+- ❌ **CCPA:** Reasonable security measures include encryption
+
+**Risk Level:**
+- **Development (localhost):** LOW (traffic doesn't leave machine)
+- **Production (deployed):** CRITICAL (immediate security breach)
+
+**Recommendation:**
+- **Enforce HTTPS everywhere** (even in development with self-signed certs)
+- Use TLS 1.3 or TLS 1.2 minimum
+- Implement HSTS headers: `Strict-Transport-Security: max-age=31536000; includeSubDomains`
+- Use environment variables for API URLs (prevent hardcoded http://)
+- Block mixed content (CSP: `upgrade-insecure-requests`)
+- Obtain free TLS certificates (Let's Encrypt, Cloudflare)
+
+---
+
+### 8. Does the app lack input length or type restrictions?
+
+**Answer:** ⚠️ **YES - MODERATE TO HIGH RISK**
+
+**Details:**
+- **Client-side validation exists** but is insufficient and bypassable
+- **No server-side length restrictions** (json-server accepts any size)
+- **Type validation on client** but not enforced on backend
+- **No rate limiting** to prevent resource exhaustion
+
+**Evidence:**
+
+### **A. Length Restrictions - Missing on Backend**
+
+**Client-Side Validation (Present but Insufficient):**
+
+```javascript
+// src/qualify.js - Client-side format validation
+export function isEmail(value) {
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(value).trim());
+}
+
+export function isSSNLast4(value) {
+  return /^\d{4}$/.test(String(value).trim());  // Enforces exactly 4 digits
+}
+
+// ZIP validation
+if (!/^\d{5}$/.test(String(data.zip || '').trim())) {
+  errors.push({ field: 'zip', message: 'ZIP code must be 5 digits.' });
+}
+```
+- ✅ Email format checked
+- ✅ SSN must be exactly 4 digits
+- ✅ ZIP must be exactly 5 digits
+- ❌ No maximum length checks (email could be 10,000 characters)
+- ❌ Validation easily bypassed (client-side only)
+
+**Backend Validation (NONE):**
+```javascript
+// json-server accepts ANY data structure without validation
+// No length limits, no type checks, no sanitization
+POST http://localhost:3001/orders
+Body: { "name": "A".repeat(1000000) }  // Accepted!
+```
+
+### **B. Missing Length Limits by Field**
+
+| Field | Client Limit | Server Limit | Risk |
+|-------|--------------|--------------|------|
+| **Name** | None | None | 🔴 Can submit megabytes of data |
+| **Email** | Format only | None | 🔴 No max length (buffer overflow potential) |
+| **Phone** | None | None | 🔴 Could be gigabytes |
+| **Address** | None | None | 🔴 Unlimited text |
+| **Order Notes** | None | None | 🔴 Could contain massive payloads |
+| **Cart Items** | None | None | 🔴 Unlimited array size |
+| **Product Name** | None | None | 🔴 No DB constraints |
+
+### **C. Type Restrictions - Partial Client-Side Only**
+
+**Type Checking Present (Client):**
+
+```javascript
+// src/qualify.js line 106
+export function isNonNegativeNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0;
+}
+```
+- ✅ Validates gross income is numeric
+- ❌ No server-side enforcement
+
+**Type Confusion Possible (Backend):**
+```javascript
+// Expected: { "quantity": 2 }
+// Attacker sends: { "quantity": "2 OR 1=1--" }
+// json-server stores: ✅ Accepted without type check
+```
+
+**Missing Type Enforcement:**
+- Quantity could be string instead of number
+- Prices could be negative or non-numeric
+- Dates could be invalid format
+- Boolean fields could be strings
+
+### **D. HTML Input Attributes (Weak Client-Side Protection)**
+
+**Some HTML5 Validation Exists:**
+```html
+<!-- Likely patterns in forms (not shown in files but typical) -->
+<input type="email" required>        <!-- Browser validates format -->
+<input type="number" min="0">        <!-- Browser prevents negatives -->
+<input type="text" maxlength="50">   <!-- Browser limits length -->
+```
+- ⚠️ HTML5 validation easily bypassed (edit DOM or send raw HTTP)
+- ⚠️ Different browsers enforce differently
+- ⚠️ Not a security control
+
+### **E. Resource Exhaustion Attack Scenarios**
+
+**1. Database Bloat:**
+```javascript
+// Attack: Submit 1GB order with massive name field
+fetch('http://localhost:3001/orders', {
+  method: 'POST',
+  body: JSON.stringify({
+    name: 'A'.repeat(1000000000),  // 1 billion characters
+    email: 'attacker@evil.com',
+    cart: []
+  })
+});
+```
+- json-server writes to `db.json` → file grows to 1GB
+- Application becomes unusable
+- Disk space exhausted
+
+**2. Memory Exhaustion:**
+```javascript
+// Attack: Submit array with 1 million cart items
+body: JSON.stringify({
+  cart: Array(1000000).fill({ id: 'latte', qty: 1, price: 5 })
+})
+```
+- Backend attempts to parse massive JSON → out of memory
+- Denial of service
+
+**3. Processing Time Attack:**
+```javascript
+// Attack: Deeply nested JSON (CPU exhaustion)
+body: JSON.stringify({
+  nested: { nested: { nested: { /* 10,000 levels deep */ } } }
+})
+```
+- JSON parser consumes excessive CPU
+- Server becomes unresponsive
+
+### **F. What IS Validated (Partial Coverage)**
+
+**Credit Application Form (`src/qualify.js`):**
+- ✅ Email format (regex)
+- ✅ Email confirmation match
+- ✅ SSN last-4 (exactly 4 digits)
+- ✅ State code (2-letter valid US state)
+- ✅ ZIP code (exactly 5 digits)
+- ✅ Gross income (positive number)
+- ✅ Consent checkbox (boolean)
+
+**What's NOT Validated:**
+- ❌ First/last name length
+- ❌ Email max length (could be 1MB)
+- ❌ City name length
+- ❌ Gross income max value (could enter 999999999999999)
+
+### **G. Registration Form Password Validation**
+
+```javascript
+// src/js/registration.js line 106
+calculatePasswordScore(value) {
+  let score = 0;
+  if (value.length >= 8) score++;   // Length check
+  if (value.length >= 12) score++;
+  if (/[a-z]/.test(value)) score++; // Lowercase
+  if (/[A-Z]/.test(value)) score++; // Uppercase
+  if (/\d/.test(value)) score++;    // Digit
+  if (/[^a-zA-Z0-9]/.test(value)) score++; // Special char
+  return score;
+}
+```
+- ✅ Encourages strong passwords (client-side meter)
+- ❌ Not enforced (can submit weak password)
+- ❌ No max length (could submit 1MB password)
+
+### **H. Comparison: What Should Be Implemented**
+
+**Industry Best Practices (Missing):**
+
+| Field | Recommended Limit | Current Limit | Status |
+|-------|-------------------|---------------|--------|
+| Name | 100 chars | None | ❌ Missing |
+| Email | 254 chars (RFC 5321) | None | ❌ Missing |
+| Phone | 20 chars | None | ❌ Missing |
+| Address | 200 chars | None | ❌ Missing |
+| Password | 8-128 chars | None | ❌ Missing |
+| Cart Items | 100 items | None | ❌ Missing |
+| Order Total | $0-$10,000 | None | ❌ Missing |
+| Request Size | 100KB max | None | ❌ Missing |
+
+### **Risk Impact**
+
+**Severity: HIGH**
+- **Denial of Service (DoS):** Resource exhaustion via massive payloads
+- **Database Corruption:** Invalid data types stored
+- **Storage Costs:** Unlimited data growth
+- **Performance Degradation:** Slow queries on oversized fields
+- **Buffer Overflow:** (If backend uses unsafe languages)
+
+**Recommendation:**
+
+**Server-Side (Critical):**
+1. Implement request size limits: `express.json({ limit: '100kb' })`
+2. Validate field lengths (Joi/Zod schemas)
+3. Enforce type constraints (TypeScript, JSON Schema)
+4. Add database constraints (VARCHAR limits, CHECK constraints)
+5. Implement rate limiting (10 requests/minute per IP)
+
+**Client-Side (Defense in Depth):**
+1. Add `maxlength` attributes to all inputs
+2. Use `type="number"` with `min`/`max` for numeric fields
+3. Show character count UI for text areas
+4. Disable submit button until validation passes
+
+**Example Secure Validation:**
+```javascript
+// Server-side with express-validator
+const { body } = require('express-validator');
+
+router.post('/orders', [
+  body('name').isLength({ min: 1, max: 100 }).trim().escape(),
+  body('email').isEmail().isLength({ max: 254 }).normalizeEmail(),
+  body('phone').isLength({ max: 20 }).matches(/^[\d\s\-\+\(\)]+$/),
+  body('cart').isArray({ max: 100 }),
+  body('cart.*.quantity').isInt({ min: 1, max: 99 }),
+  body('total').isFloat({ min: 0, max: 10000 })
+], (req, res) => { /* handle validated request */ });
+```
+
+---
+
+## Checklist Summary
+
+| # | Question | Answer | Severity | Status |
+|---|----------|--------|----------|--------|
+| 1 | Does it accept user input without validation? | ✅ YES | 🔴 CRITICAL | Backend has NO validation |
+| 2 | Is data inserted into HTML without escaping? | ⚠️ YES | 🟠 HIGH | innerHTML used, no sanitization |
+| 3 | Are passwords stored in plain text? | ✅ YES | 🔴 CRITICAL | Hardcoded, Base64 in storage |
+| 4 | Are API keys/credentials visible in code? | ⚠️ PARTIAL | 🟡 MEDIUM | Demo credentials exposed |
+| 5 | Does it display detailed error messages? | ⚠️ YES | 🟡 MEDIUM | Excessive console logging |
+| 6 | Are there default/weak passwords? | ✅ YES | 🔴 CRITICAL | `test123`, `DemoPass123` |
+| 7 | Is data transmitted without encryption? | ✅ YES | 🟠 HIGH | HTTP only, no HTTPS |
+| 8 | Does it lack input length/type restrictions? | ⚠️ YES | 🟠 HIGH | No server-side limits |
+
+**Overall Assessment:** 🔴 **CRITICAL RISK** - Application fails majority of basic security checks.
+
+---
+
 **Assessment completed successfully. No changes made to codebase per user requirements.**
