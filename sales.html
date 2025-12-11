@@ -69,10 +69,13 @@
 
   <script>
     // Protect page: redirect non-admins to login
+    console.log('[sales.html] adminLoggedIn value:', localStorage.getItem('adminLoggedIn'));
     if (localStorage.getItem('adminLoggedIn') !== 'true') {
+      console.log('[sales.html] admin not logged in — redirecting to login');
       try { sessionStorage.setItem('intended', location.pathname); } catch(e){}
       location.replace('login.html');
     }
+    console.log('[sales.html] admin verified — showing page');
 
     // Toggle top nav state: replace Login with Admin Logged in when appropriate
     (function toggleNav(){
