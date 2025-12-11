@@ -1318,4 +1318,380 @@ router.post('/orders', [
 
 ---
 
+## OWASP Top 10 (2021) - Vulnerabilities NOT Present
+
+This section documents security issues from the OWASP Top 10 that are **NOT found** in the application, providing credit for secure practices already in place.
+
+### ✅ A06:2021 - Vulnerable and Outdated Components (NOT FOUND)
+
+**Status:** 🟢 **SECURE**
+
+**Evidence:**
+```bash
+# npm audit result
+found 0 vulnerabilities
+```
+
+**Backend Dependencies:**
+```json
+{
+  "devDependencies": {
+    "json-server": "^1.0.0-beta.3"
+  }
+}
+```
+- Only 1 dependency (json-server)
+- No known CVEs at time of assessment
+- npm audit shows clean report
+
+**Frontend Dependencies:**
+- Zero npm dependencies
+- Pure vanilla JavaScript (no frameworks)
+- No third-party libraries loaded from CDNs
+- All code is self-contained
+
+**Why This Is Good:**
+- ✅ Minimal attack surface
+- ✅ No transitive dependency vulnerabilities
+- ✅ No outdated packages with known exploits
+- ✅ No supply chain attack risks
+- ✅ Easy to audit (all code is visible)
+
+**Note:** While json-server is beta software (1.0.0-beta.3), it has no known security vulnerabilities and is appropriate for demo/development use.
+
+**Recommendation:** Continue monitoring dependencies, but current state is secure.
+
+---
+
+### ✅ A10:2021 - Server-Side Request Forgery (SSRF) (NOT FOUND)
+
+**Status:** 🟢 **NOT APPLICABLE**
+
+**Analysis:**
+The application does not implement any functionality that could lead to SSRF vulnerabilities:
+
+**No Server-Side URL Fetching:**
+- ❌ No backend code that fetches external URLs
+- ❌ No webhook implementations
+- ❌ No PDF generation from URLs
+- ❌ No image processing from remote sources
+- ❌ No file imports from user-provided URLs
+
+**Client-Side Fetch Only:**
+```javascript
+// All fetch calls are client-side to fixed endpoints
+const resp = await fetch('http://localhost:3001/products');
+const resp = await fetch('http://localhost:3001/orders');
+```
+- Fetch operations happen in browser (client-side)
+- URLs are hardcoded (not user-controlled)
+- No server-side component makes outbound requests
+
+**Why SSRF Isn't Possible:**
+1. **No backend application logic** - json-server only serves static data
+2. **No URL parameters** used for fetching resources
+3. **No proxy functionality** implemented
+4. **No third-party API integrations** that accept URLs
+
+**Conclusion:** SSRF risk does not apply to this architecture.
+
+---
+
+### ⚠️ A04:2021 - Insecure Design (PARTIALLY SECURE)
+
+**Status:** 🟡 **MIXED**
+
+**Secure Design Patterns Present:**
+
+**1. Separation of Concerns:**
+```
+src/
+├── js/           # Business logic modules
+├── styles/       # Presentation layer
+├── pages/        # View layer
+└── utils/        # Helper functions
+```
+- ✅ Modular architecture
+- ✅ Clear separation of concerns
+- ✅ Reusable components
+
+**2. Defensive Programming:**
+```javascript
+// Error handling with try/catch
+try {
+  const resp = await fetch(API_URL);
+  if (!resp.ok) { /* handle error */ }
+  const data = await resp.json();
+  if (!Array.isArray(data)) { return []; }
+  return data;
+} catch (err) {
+  console.error('Error:', err);
+  return [];  // Graceful fallback
+}
+```
+- ✅ Try/catch blocks throughout
+- ✅ Graceful degradation on errors
+- ✅ Fallback values (empty arrays, null)
+- ✅ Response validation before use
+
+**3. Rate Limiting (Client-Side):**
+```javascript
+// src/js/loginRateLimiter.js
+// Tracks login attempts and implements lockout
+export function isBlocked(identifier) {
+  // Blocks after N failed attempts
+}
+```
+- ✅ Rate limiting logic implemented
+- ⚠️ Client-side only (can be bypassed)
+
+**4. Constant-Time Comparison:**
+```javascript
+// src/js/login.js
+function constantTimeEquals(a, b) {
+  // Reduces timing attack surface
+}
+```
+- ✅ Timing attack mitigation implemented
+- ✅ Shows security awareness
+
+**5. Input Validation Functions:**
+```javascript
+// src/qualify.js
+export function isEmail(value) { /* validation */ }
+export function isSSNLast4(value) { /* validation */ }
+export function isValidState(value) { /* validation */ }
+```
+- ✅ Validation helpers defined
+- ✅ Pure functions (testable)
+- ⚠️ Not enforced server-side
+
+**Insecure Design Elements:**
+
+**1. Client-Side Authorization:**
+```javascript
+// sales.html - inherently insecure pattern
+if (localStorage.getItem('adminLoggedIn') !== 'true') {
+  location.replace('login.html');
+}
+```
+- ❌ Fundamental design flaw (client-controlled security)
+
+**2. Demo Architecture:**
+- ❌ No backend authentication/authorization layer
+- ❌ json-server not designed for security
+- ❌ Client stores sensitive data (PII in localStorage)
+
+**Assessment:**
+- **Code quality:** Good (modular, well-documented)
+- **Security architecture:** Poor (client-side security model)
+- **Trade-off:** Acceptable for demo/education, unacceptable for production
+
+---
+
+### ⚠️ A08:2021 - Software and Data Integrity Failures (PARTIALLY SECURE)
+
+**Status:** 🟡 **MIXED**
+
+**Secure Practices Present:**
+
+**1. No External Dependencies via CDN:**
+```html
+<!-- All scripts are local, no CDN resources -->
+<script type="module" src="./src/js/login.js"></script>
+<script type="module" src="./src/js/cart.js"></script>
+```
+- ✅ No third-party CDN scripts (no SRI needed)
+- ✅ All JavaScript served from same origin
+- ✅ No risk of CDN compromise
+- ✅ No Subresource Integrity (SRI) needed
+
+**2. Version Control:**
+- ✅ Git repository with commit history
+- ✅ Branch strategy in use (`work/save-local-20251112-2036`)
+- ✅ Code review possible through commits
+
+**3. No Auto-Updates:**
+- ✅ No automatic dependency updates
+- ✅ Controlled update process (manual npm update)
+
+**Integrity Failures Present:**
+
+**1. Unsigned Tokens:**
+```javascript
+// src/js/sessionManager.js
+createToken(sub, expiresInSec = 60 * 60) {
+  const payload = { sub, iat, exp };
+  return btoa(JSON.stringify(payload));  // NO SIGNATURE
+}
+```
+- ❌ Tokens can be forged (integrity failure)
+- ❌ No HMAC or digital signature
+
+**2. Client-Side Data Storage Without Integrity:**
+```javascript
+// Data stored without HMAC or signature
+localStorage.setItem('tcr_last_order', JSON.stringify(saved));
+localStorage.setItem('adminLoggedIn', 'true');
+```
+- ❌ No integrity protection on stored data
+- ❌ Data can be modified by any JavaScript
+
+**3. No Build Integrity Checks:**
+- ❌ No webpack/build hash validation
+- ❌ No file integrity monitoring
+
+**What's NOT Vulnerable:**
+- ✅ No CI/CD pipeline to compromise
+- ✅ No package registry attacks (no dependencies)
+- ✅ No serialization vulnerabilities (JSON only)
+- ✅ No plugin system or dynamic code loading
+
+---
+
+### ⚠️ A09:2021 - Security Logging and Monitoring Failures (PARTIALLY SECURE)
+
+**Status:** 🟡 **MIXED**
+
+**Logging Present (Over-logging):**
+
+```javascript
+// Extensive console logging throughout
+console.log('[login.js] credentials', { email, passwordPresent: !!password });
+console.log('[sales.html] adminLoggedIn value:', localStorage.getItem('adminLoggedIn'));
+console.error('Orders.fetchAll error:', err);
+```
+
+**What IS Logged:**
+- ✅ Authentication attempts (email present)
+- ✅ Authorization checks (admin flag value)
+- ✅ API errors (fetch failures)
+- ✅ Module load events
+
+**Security Logging Failures:**
+
+**1. No Centralized Logging:**
+- ❌ Logs only to browser console (not persistent)
+- ❌ No server-side logging
+- ❌ No log aggregation (Splunk, ELK, Datadog)
+
+**2. No Security Event Tracking:**
+- ❌ Failed login attempts not logged server-side
+- ❌ No audit trail for admin actions
+- ❌ No suspicious activity detection
+- ❌ No IP address logging
+
+**3. No Monitoring/Alerting:**
+- ❌ No real-time alerts for security events
+- ❌ No anomaly detection
+- ❌ No threshold-based alerts (multiple failed logins)
+
+**4. Excessive Debug Logs in Production:**
+- ❌ PII exposed in console logs
+- ❌ Implementation details leaked
+- ❌ No log level filtering (DEBUG vs WARN vs ERROR)
+
+**5. No Log Retention Policy:**
+- ❌ Console logs disappear on page refresh
+- ❌ No historical data for forensics
+
+**What Would Make This Secure:**
+- Server-side logging of authentication events
+- Log aggregation service (Winston, Pino → CloudWatch)
+- Security Information and Event Management (SIEM)
+- Automated alerting on suspicious patterns
+- Log retention for compliance (90 days minimum)
+
+**Current State:**
+- Good: Detailed error information for debugging
+- Bad: No persistent security audit trail
+- Risk: Cannot detect or respond to attacks
+
+---
+
+### ✅ A03:2021 - Injection (SQL/NoSQL/Command) (MOSTLY SECURE)
+
+**Status:** 🟢 **LOW RISK**
+
+**Why Injection Risk Is Low:**
+
+**1. No SQL Database:**
+- json-server uses file-based storage (db.json)
+- No SQL queries constructed from user input
+- No database connection strings
+- No ORM or raw SQL
+
+**2. No Command Execution:**
+```javascript
+// No child_process, exec(), eval() of user input
+// No shell commands constructed from user data
+```
+- ❌ No `eval()` usage found
+- ❌ No `Function()` constructor
+- ❌ No shell command execution
+- ❌ No template injection
+
+**3. JSON-Based API:**
+```javascript
+// json-server automatically sanitizes JSON
+POST /orders
+Body: { "name": "'; DROP TABLE users;--" }
+// Stored as literal string, not executed
+```
+- JSON.parse() handles data safely
+- No SQL context for injection
+
+**XSS Risk (Different Category):**
+```javascript
+// innerHTML usage exists (covered under A03 XSS separately)
+s.innerHTML = msgs.map(m=>'<li>'+m+'</li>').join('');
+```
+- ⚠️ XSS possible via innerHTML (documented separately as Medium risk)
+- Not SQL/Command injection
+
+**4. No Server-Side Template Engines:**
+- No Handlebars, EJS, Pug, etc.
+- No template injection vulnerability
+
+**Edge Cases to Monitor:**
+- If backend is replaced with SQL database → validate all inputs
+- If shell commands added → use parameterized execution
+- XSS via innerHTML remains a concern (separate issue)
+
+**Conclusion:** Traditional injection attacks (SQLi, Command Injection) are not possible with current architecture.
+
+---
+
+## Summary: Vulnerabilities NOT Present
+
+| OWASP Category | Status | Notes |
+|----------------|--------|-------|
+| **A06: Vulnerable Components** | ✅ SECURE | 0 npm vulnerabilities, minimal dependencies |
+| **A10: SSRF** | ✅ NOT APPLICABLE | No server-side URL fetching |
+| **A04: Insecure Design** | 🟡 PARTIAL | Good code structure, poor security architecture |
+| **A08: Integrity Failures** | 🟡 PARTIAL | No CDN risks, but unsigned tokens |
+| **A09: Logging/Monitoring** | 🟡 PARTIAL | Extensive logs, but no security monitoring |
+| **A03: SQL/Command Injection** | ✅ LOW RISK | No SQL database, no command execution |
+
+### Key Strengths
+
+1. **Minimal Dependency Attack Surface:** Only 1 npm package, no third-party scripts
+2. **No Outdated Components:** Clean npm audit, current versions
+3. **Defensive Error Handling:** Try/catch throughout, graceful fallbacks
+4. **Modular Architecture:** Well-organized code structure
+5. **Security Awareness:** Comments document known vulnerabilities
+6. **No Traditional Injection Vectors:** No SQL, no command execution, no eval()
+
+### Areas That Could Introduce New Risks
+
+**If the application evolves, watch for:**
+- Adding external dependencies (monitor with `npm audit`)
+- Implementing backend with SQL database (require parameterized queries)
+- Adding file upload functionality (validate types, scan for malware)
+- Integrating third-party APIs (implement SSRF protections)
+- Using server-side templates (prevent template injection)
+- Adding CI/CD pipelines (secure build process)
+
+---
+
 **Assessment completed successfully. No changes made to codebase per user requirements.**
