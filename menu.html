@@ -32,6 +32,9 @@
         <div style="font-size:.85rem;color:var(--muted)">Fresh. Fast. Friendly.</div>
       </div>
     </a>
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
     <nav role="navigation" aria-label="Primary navigation">
       <a href="/">Home</a>
       <a href="/menu.html" aria-current="page">Menu</a>
@@ -53,6 +56,7 @@
     </div>
   </main>
 
+  <script type="module" src="./src/js/nav.js"></script>
   <script type="module">
     import SessionManager from './src/js/sessionManager.js';
     import { Cart, renderCartInto } from './src/js/cart.js';

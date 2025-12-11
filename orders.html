@@ -28,6 +28,9 @@
         <div style="font-size:.85rem;color:var(--muted)">Fresh. Fast. Friendly.</div>
       </div>
     </a>
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
     <nav role="navigation" aria-label="Primary navigation">
       <a href="/">Home</a>
       <a href="/menu.html">Menu</a>
@@ -61,6 +64,7 @@
     <p>&copy; Titan Coffee Run</p>
   </footer>
 
+  <script type="module" src="./src/js/nav.js"></script>
   <script type="module">
     import { Orders, renderOrdersInto } from './src/js/orders.js';
 

@@ -18,6 +18,9 @@
                 <div style="font-size:.85rem;color:var(--muted)">Fresh. Fast. Friendly.</div>
             </div>
         </a>
+        <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+            <span></span><span></span><span></span>
+        </button>
         <nav role="navigation" aria-label="Primary navigation">
             <a href="index.html">Home</a>
             <a href="#">Menu</a>
@@ -110,6 +113,7 @@
         document.getElementById('year').textContent = new Date().getFullYear();
     </script>
 
+    <script type="module" src="./src/js/nav.js"></script>
     <script type="module" src="./src/js/registration.js"></script>
 </body>
 </html>

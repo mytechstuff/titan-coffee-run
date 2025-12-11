@@ -51,6 +51,29 @@ header{
     display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.1rem;
     box-shadow:0 4px 12px rgba(86,45,20,.12);
 }
+/* Hamburger trigger (hidden on wide screens) */
+.nav-toggle{
+    display:none;
+    background:transparent;
+    border:1px solid rgba(0,0,0,0.05);
+    border-radius:8px;
+    padding:.4rem .5rem;
+    cursor:pointer;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+}
+.nav-toggle span{
+    display:block;
+    width:18px;
+    height:2px;
+    background:var(--accent);
+    border-radius:2px;
+    transition:transform .18s ease, opacity .18s ease;
+}
+.nav-open .nav-toggle span:nth-child(1){transform:translateY(5px) rotate(45deg)}
+.nav-open .nav-toggle span:nth-child(2){opacity:0}
+.nav-open .nav-toggle span:nth-child(3){transform:translateY(-5px) rotate(-45deg)}
 /* navigation links and newly added auth links */
 nav a{margin-left:1rem;color:var(--muted);text-decoration:none;font-weight:600}
 nav a:hover{color:var(--accent)}
@@ -81,6 +104,20 @@ main{max-width:980px;margin:2rem auto;padding:0 1rem}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:1.25rem}
 .card{background:var(--card);padding:1rem;border-radius:10px;box-shadow:0 6px 18px rgba(98,54,30,.04)}
 footer{max-width:980px;margin:2rem auto;padding:1rem;text-align:center;color:var(--muted);font-size:.95rem}
+@media(max-width:768px){
+    header{align-items:flex-start;gap:.5rem}
+    .nav-toggle{display:inline-flex}
+    nav{
+        display:none;
+        flex-direction:column;
+        width:100%;
+        gap:.5rem;
+        padding:.5rem 0;
+        background:rgba(255,255,255,0.9);
+    }
+    nav a{margin:0;padding:.35rem .1rem}
+    .nav-open nav{display:flex}
+}
 @media(min-width:720px){
         /*
             At larger viewports we place the hero content and the aside side-by-side.
